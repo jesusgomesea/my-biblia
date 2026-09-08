@@ -51,11 +51,43 @@ plano de estudo para ele.
 
 ## Stack
 
-- **Next.js (App Router) + TypeScript** — frontend e rotas de API no mesmo
-  projeto.
-- Rotas de API do Next atuam como **proxy** para as fontes externas, o que
-  mantém chaves fora do navegador e permite cache.
-- Estilo, banco de dados e autenticação: **ainda não definidos**.
+- **Next.js 16** (App Router) + **React** + **TypeScript**
+- **Tailwind CSS v4** para estilo
+- **ESLint** (`eslint-config-next`)
+- Node.js 22
+
+As rotas de API do Next atuam como **proxy** para as fontes externas, o que
+mantém chaves fora do navegador e permite cache.
+
+> **Atenção ao trabalhar com Next.js aqui:** este projeto usa o Next.js 16, que
+> tem mudanças de API e de convenções em relação a versões anteriores. Antes de
+> escrever código de app, consulte os guias em `node_modules/next/dist/docs/`.
+> O arquivo `AGENTS.md` na raiz é gerado e mantido pelo próprio `next dev` —
+> não o edite à mão.
+
+### Comandos
+
+| Comando | O que faz |
+|---------|-----------|
+| `npm run dev` | Sobe o servidor de desenvolvimento |
+| `npm run build` | Build de produção |
+| `npm start` | Sobe o build de produção |
+| `npm run lint` | Roda o ESLint |
+
+### Estrutura pretendida
+
+```
+app/
+  page.tsx              # home
+  biblia/               # navegação livro > capítulo > versículo
+  planos/               # criar, listar e executar planos
+  api/
+    biblia/             # proxy das fontes bíblicas
+    planos/gerar/       # geração do plano via IA
+components/             # componentes de UI reutilizáveis
+lib/
+  bible/                # camada de provider das fontes bíblicas
+```
 
 ## Fontes de dados bíblicos
 
@@ -72,7 +104,8 @@ problemas de licenciamento com traduções protegidas por direitos autorais.
 
 | Data | Decisão |
 |------|---------|
-| 2026-09-08 | Stack: Next.js + TypeScript. |
+| 2026-09-08 | Stack: Next.js 16 (App Router) + TypeScript. |
+| 2026-09-08 | Tailwind CSS v4 como biblioteca de estilo. |
 | 2026-09-08 | Repositório público no GitHub. |
 | 2026-09-08 | Apenas fontes bíblicas livres / domínio público. |
 | 2026-09-08 | Geração dos planos de estudo via IA. |
@@ -80,13 +113,12 @@ problemas de licenciamento com traduções protegidas por direitos autorais.
 ## Em aberto
 
 - Qual provedor de IA usar para gerar os planos.
-- Se haverá contas de usuário (e qual banco), ou se marcações e planos ficam
-  apenas no navegador.
-- Biblioteca de estilo (Tailwind ou outra).
+- **Onde salvar planos e marcações**: apenas no navegador (sem cadastro) ou em
+  contas de usuário com banco de dados (sincroniza entre dispositivos).
 - Estratégia de cache do texto bíblico.
 - Idiomas da interface (a interface começa em pt-BR).
 
 ## Estado atual
 
-Projeto recém-iniciado. Ainda **sem código de aplicação** — apenas este
-documento de escopo e o versionamento.
+Projeto Next.js recém-criado, ainda com a página inicial padrão do template.
+Nenhuma funcionalidade do escopo foi implementada.
