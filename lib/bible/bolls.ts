@@ -1,0 +1,116 @@
+import { sanitizeVerseHtml } from './sanitize'
+import type {
+  BibleProvider,
+  Book,
+  Language,
+  SearchResults,
+  Translation,
+  Verse,
+} from './types'
+
+const BASE = 'https://bolls.life'
+
+/** Uma semana: o texto bíblico não muda, só o catálogo cresce de vez em quando. */
+const REVALIDATE = 60 * 60 * 24 * 7
+
+/** Ids de tradução entram na URL, então só aceitamos o formato que a fonte usa. */
+function assertTranslation(id: string): string {
+  if (!/^[A-Za-z0-9_-]{1,20}$/.test(id)) {
+    throw new Error(`Tradução inválida: ${id}`)
+  }
+  return id
+}
+
+function assertNumber(value: number, max: number, label: string): number {
+  if (!Number.isInteger(value) || value < 1 || value > max) {
+    throw new Error(`${label} inválido: ${value}`)
+  }
+  return value
+}
+
+async function request<T>(path: string, revalidate = REVALIDATE): Promise<T> {
+  const response = await fetch(`${BASE}${path}`, { next: { revalidate } })
+  if (!response.ok) {
+    throw new Error(`Bolls.life respondeu ${response.status} em ${path}`)
+  }
+  return response.json() as Promise<T>
+}
+
+type RawTranslation = { short_name: string; full_name: string }
+type RawLanguage = { language: string; translations: RawTranslation[] }
+type RawBook = { bookid: number; name: string; chapters: number }
+type RawVerse = { verse: number; text: string }
+type RawHit = { book: number; chapter: number; verse: number; text: string }
+type RawSearch = { results: RawHit[]; total: number }
+
+export const bolls: BibleProvider = {
+  async listLanguages(): Promise<Language[]> {
+    const raw = await request<RawLanguage[]>(
+      '/static/bolls/app/views/languages.json',
+    )
+    return raw
+      .map((entry) => ({
+        name: entry.language,
+        translations: entry.translations.map(
+          (t): Translation => ({
+            id: t.short_name,
+            name: t.full_name,
+            language: entry.language,
+          }),
+        ),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  },
+
+  async listBooks(translation: string): Promise<Book[]> {
+    const raw = await request<RawBook[]>(
+      `/get-books/${assertTranslation(translation)}/`,
+    )
+    return raw.map((book) => ({
+      id: book.bookid,
+      name: book.name,
+      chapters: book.chapters,
+    }))
+  },
+
+  async getChapter(
+    translation: string,
+    book: number,
+    chapter: number,
+  ): Promise<Verse[]> {
+    const path = `/get-text/${assertTranslation(translation)}/${assertNumber(
+      book,
+      66,
+      'Livro',
+    )}/${assertNumber(chapter, 150, 'Capítulo')}/`
+    const raw = await request<RawVerse[]>(path)
+    return raw.map((verse) => ({
+      number: verse.verse,
+      html: sanitizeVerseHtml(verse.text),
+    }))
+  },
+
+  async search(
+    translation: string,
+    query: string,
+    limit = 50,
+  ): Promise<SearchResults> {
+    const params = new URLSearchParams({
+      search: query,
+      limit: String(assertNumber(limit, 200, 'Limite')),
+    })
+    const raw = await request<RawSearch>(
+      `/v2/find/${assertTranslation(translation)}?${params}`,
+      60 * 60,
+    )
+    return {
+      total: raw.total,
+      hits: raw.results.map((hit) => ({
+        book: hit.book,
+        chapter: hit.chapter,
+        verse: hit.verse,
+        html: sanitizeVerseHtml(hit.text),
+      })),
+    }
+  },
+}

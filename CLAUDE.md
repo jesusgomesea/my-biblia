@@ -87,18 +87,35 @@ app/
 components/             # componentes de UI reutilizáveis
 lib/
   bible/                # camada de provider das fontes bíblicas
+  storage/              # persistência no localStorage (planos e marcações)
 ```
 
 ## Fontes de dados bíblicos
 
-**Decisão: usar apenas traduções livres / em domínio público.** Isso evita
-problemas de licenciamento com traduções protegidas por direitos autorais.
+**Provedor atual: [Bolls.life](https://bolls.life)** — não exige chave de API e
+oferece **152 traduções em 31 idiomas**, sendo 16 em português. É o que mais se
+aproxima do objetivo de "qualquer tradução, qualquer língua".
 
-- Candidatas: `bible-api.com`, `Bolls.life`.
-- O acesso deve ficar atrás de uma **camada de provider** própria (`lib/bible`),
-  de modo que trocar ou somar fontes no futuro não exija reescrever o app.
-- Traduções protegidas por direito autoral **não** devem ser adicionadas sem
-  antes resolver o licenciamento.
+Endpoints em uso:
+
+| Endpoint | Retorna |
+|----------|---------|
+| `/static/bolls/app/views/languages.json` | Catálogo de idiomas e traduções |
+| `/get-books/{translation}/` | Os 66 livros, com nome e nº de capítulos |
+| `/get-text/{translation}/{book}/{chapter}/` | Versículos do capítulo |
+| `/v2/find/{translation}?search=...` | Busca textual, com `<mark>` no trecho |
+
+Os livros são identificados por número (`bookid` de 1 a 66), não por nome.
+
+> **Risco de licenciamento em aberto.** O Bolls.life serve tanto traduções em
+> domínio público (ex.: `TB10`, Almeidas antigas) quanto traduções ainda
+> protegidas por direito autoral (ex.: `NVIPT`, `NVT`, `NAA`, `MENS`). Servir o
+> catálogo inteiro **não** é o mesmo que servir só material livre. Decidir se o
+> app expõe o catálogo completo ou apenas uma lista curada de traduções livres
+> continua pendente — ver *Em aberto*.
+
+O acesso fica atrás de uma **camada de provider** própria (`lib/bible`), de modo
+que trocar ou somar fontes no futuro não exija reescrever o app.
 
 ## Decisões tomadas
 
@@ -107,16 +124,19 @@ problemas de licenciamento com traduções protegidas por direitos autorais.
 | 2026-09-08 | Stack: Next.js 16 (App Router) + TypeScript. |
 | 2026-09-08 | Tailwind CSS v4 como biblioteca de estilo. |
 | 2026-09-08 | Repositório público no GitHub. |
-| 2026-09-08 | Apenas fontes bíblicas livres / domínio público. |
+| 2026-09-08 | Fonte bíblica sem chave de API e sem cadastro (descartada a API.Bible). |
 | 2026-09-08 | Geração dos planos de estudo via IA. |
+| 2026-09-08 | Sem cadastro: planos e marcações ficam no `localStorage` do navegador. |
+| 2026-09-08 | Bolls.life como provedor bíblico inicial (sem chave, 152 traduções). |
 
 ## Em aberto
 
 - Qual provedor de IA usar para gerar os planos.
-- **Onde salvar planos e marcações**: apenas no navegador (sem cadastro) ou em
-  contas de usuário com banco de dados (sincroniza entre dispositivos).
+- **Curadoria do catálogo de traduções**: expor as 152 do Bolls.life ou apenas
+  as que estão em domínio público (ver o risco de licenciamento acima).
 - Estratégia de cache do texto bíblico.
 - Idiomas da interface (a interface começa em pt-BR).
+- Se um dia houver contas de usuário, como migrar o que está no `localStorage`.
 
 ## Estado atual
 
