@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import SeletorPassagem from "@/components/seletor-passagem";
-import { bible, type Book } from "@/lib/bible";
+import { bible, livroPorId, type Book } from "@/lib/bible";
 
 function capituloAnterior(livros: Book[], livro: number, capitulo: number) {
   if (capitulo > 1) return { livro, capitulo: capitulo - 1 };
@@ -24,11 +24,18 @@ export default async function Capitulo(
   const numCapitulo = Number(capitulo);
   if (!Number.isInteger(idLivro) || !Number.isInteger(numCapitulo)) notFound();
 
-  const [linguas, livros, versiculos] = await Promise.all([
+  const [linguas, disponiveis, versiculos] = await Promise.all([
     bible.listLanguages(),
     bible.listBooks(traducao),
     bible.getChapter(traducao, idLivro, numCapitulo),
   ]);
+
+  // A fonte devolve nomes que variam por tradução e com caracteres cirílicos
+  // trocados em alguns livros, então exibimos os nomes canônicos em português.
+  const livros: Book[] = disponiveis.map((livro) => ({
+    ...livro,
+    name: livroPorId(livro.id)?.nome ?? livro.name,
+  }));
 
   const atual = livros.find((l) => l.id === idLivro);
   if (!atual || versiculos.length === 0) notFound();

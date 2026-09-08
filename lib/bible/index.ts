@@ -8,4 +8,5 @@ export const TRADUCAO_PADRAO = 'ARA'
 export const bible: BibleProvider = bolls
 
 export * from './types'
+export * from './livros'
 export { sanitizeVerseHtml, stripHtml } from './sanitize'
