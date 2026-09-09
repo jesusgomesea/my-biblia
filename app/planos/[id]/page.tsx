@@ -21,12 +21,12 @@ export default function DetalheDoPlano() {
   }, [id])
 
   if (plano === undefined) {
-    return <p className="mx-auto max-w-2xl px-4 py-10 text-muted">Carregando…</p>
+    return <p className="mx-auto max-w-3xl px-4 py-10 lg:px-8 text-muted">Carregando…</p>
   }
 
   if (plano === null) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-10">
+      <div className="mx-auto max-w-3xl px-4 py-10 lg:px-8">
         <p className="text-muted">
           Plano não encontrado. Ele fica salvo neste navegador, então não aparece
           em outro dispositivo.
@@ -46,7 +46,7 @@ export default function DetalheDoPlano() {
     escolhido === null ? pendente : escolhido === 'nenhum' ? null : escolhido
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10">
+    <div className="mx-auto max-w-3xl px-4 py-10 lg:px-8">
       <h1 className="font-serif text-3xl font-semibold">{plano.titulo}</h1>
       <p className="mt-2 text-muted">{plano.resumo}</p>
       <p className="mt-3 text-sm text-muted">
