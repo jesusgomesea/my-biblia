@@ -19,6 +19,18 @@ commits, do mais novo para o mais antigo:
 - `6a2f920` — Leading page + layout `/planos` em duas colunas.
 - `950c2e9` — PWA instalável.
 
+## Página de bastidores
+
+Existe uma rota **não linkada no menu** para inspeção manual:
+
+```
+/devprog
+```
+
+Ela mostra o estado da sessão, o conteúdo do `localStorage`, permite
+semear/limpar dados, forçar sincronização e pingar `/api/dados`,
+`/api/auth/session` e o manifest. Sem gate — acesso por URL direta.
+
 ## Ações manuais pendentes ANTES de rodar
 
 Estas coisas não estão no git e precisam existir na máquina para o app subir:
