@@ -1,0 +1,16 @@
+# Este arquivo existe por um motivo só: limitar a taxa da rota de geração de
+# plano, que é pública e consome cota paga da chave do Gemini. O restante da
+# configuração do Next.js continua por conta do Netlify — não acrescente build
+# command, publish directory nem versão do adaptador aqui.
+#
+# O plano gratuito permite duas regras deste tipo por projeto.
+[[redirects]]
+  from = "/api/planos/gerar"
+  to = "/api/planos/gerar"
+  status = 200
+  force = true
+
+  [redirects.rate_limit]
+    window_limit = 10
+    window_size = 60
+    aggregate_by = ["ip", "domain"]
