@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import ListaVersiculos from "@/components/lista-versiculos";
 import SeletorPassagem from "@/components/seletor-passagem";
 import { bible, livroPorId, type Book } from "@/lib/bible";
 
@@ -58,17 +59,12 @@ export default async function Capitulo(
         <span className="text-accent">{numCapitulo}</span>
       </h1>
 
-      <article className="mt-6 space-y-3 font-serif text-lg/8">
-        {versiculos.map((versiculo) => (
-          <p key={versiculo.number} className="flex gap-3">
-            <span className="w-7 shrink-0 pt-1.5 text-right font-sans text-xs text-muted">
-              {versiculo.number}
-            </span>
-            {/* HTML sanitizado em lib/bible/sanitize.ts: só <i> e <mark> sobrevivem. */}
-            <span dangerouslySetInnerHTML={{ __html: versiculo.html }} />
-          </p>
-        ))}
-      </article>
+      <ListaVersiculos
+        versiculos={versiculos}
+        traducao={traducao}
+        livro={idLivro}
+        capitulo={numCapitulo}
+      />
 
       <nav className="mt-10 flex justify-between border-t border-borda pt-4 text-sm">
         {anterior ? (

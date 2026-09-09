@@ -32,6 +32,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <Link href="/planos" className="hover:text-foreground">
                 Planos
               </Link>
+              <Link href="/marcacoes" className="hover:text-foreground">
+                Marcados
+              </Link>
             </div>
           </nav>
         </header>
