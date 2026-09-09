@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import CampoBusca from "@/components/campo-busca";
 import ListaVersiculos from "@/components/lista-versiculos";
+import PrefetchAdjacentes from "@/components/prefetch-adjacentes";
 import SeletorPassagem from "@/components/seletor-passagem";
 import { bible, livroPorId, type Book } from "@/lib/bible";
 
@@ -48,9 +49,16 @@ export default async function Capitulo(
 
   const anterior = capituloAnterior(livros, idLivro, numCapitulo);
   const seguinte = capituloSeguinte(livros, idLivro, numCapitulo);
+  const urlAnterior = anterior
+    ? `/biblia/${traducao}/${anterior.livro}/${anterior.capitulo}`
+    : null;
+  const urlSeguinte = seguinte
+    ? `/biblia/${traducao}/${seguinte.livro}/${seguinte.capitulo}`
+    : null;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
+      <PrefetchAdjacentes urls={[urlAnterior, urlSeguinte]} />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <SeletorPassagem
           linguas={linguas}
@@ -75,21 +83,15 @@ export default async function Capitulo(
       />
 
       <nav className="mt-10 flex justify-between border-t border-borda pt-4 text-sm">
-        {anterior ? (
-          <Link
-            href={`/biblia/${traducao}/${anterior.livro}/${anterior.capitulo}`}
-            className="text-accent hover:underline"
-          >
+        {urlAnterior ? (
+          <Link href={urlAnterior} className="text-accent hover:underline">
             ← Capítulo anterior
           </Link>
         ) : (
           <span />
         )}
-        {seguinte ? (
-          <Link
-            href={`/biblia/${traducao}/${seguinte.livro}/${seguinte.capitulo}`}
-            className="text-accent hover:underline"
-          >
+        {urlSeguinte ? (
+          <Link href={urlSeguinte} className="text-accent hover:underline">
             Próximo capítulo →
           </Link>
         ) : (

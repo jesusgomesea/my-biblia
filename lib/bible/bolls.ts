@@ -1,10 +1,10 @@
+import linguasEstaticas from './linguas.json'
 import { sanitizeVerseHtml } from './sanitize'
 import type {
   BibleProvider,
   Book,
   Language,
   SearchResults,
-  Translation,
   Verse,
 } from './types'
 
@@ -36,8 +36,6 @@ async function request<T>(path: string, revalidate = REVALIDATE): Promise<T> {
   return response.json() as Promise<T>
 }
 
-type RawTranslation = { short_name: string; full_name: string }
-type RawLanguage = { language: string; translations: RawTranslation[] }
 type RawBook = { bookid: number; name: string; chapters: number }
 type RawVerse = { verse: number; text: string }
 type RawHit = { book: number; chapter: number; verse: number; text: string }
@@ -45,21 +43,9 @@ type RawSearch = { results: RawHit[] }
 
 export const bolls: BibleProvider = {
   async listLanguages(): Promise<Language[]> {
-    const raw = await request<RawLanguage[]>(
-      '/static/bolls/app/views/languages.json',
-    )
-    return raw
-      .map((entry) => ({
-        name: entry.language,
-        translations: entry.translations.map(
-          (t): Translation => ({
-            id: t.short_name,
-            name: t.full_name,
-            language: entry.language,
-          }),
-        ),
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name))
+    // Servido de um JSON versionado em vez de bater na fonte a cada leitura.
+    // Atualização manual: `node scripts/atualizar-linguas.mjs`.
+    return linguasEstaticas as Language[]
   },
 
   async listBooks(translation: string): Promise<Book[]> {

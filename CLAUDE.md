@@ -77,6 +77,7 @@ mantém chaves fora do navegador e permite cache.
 | `npm run test:watch` | Vitest em modo watch |
 | `npm run test:e2e` | Roda os testes end-to-end (Playwright) |
 | `npm run test:e2e:install` | Instala os navegadores do Playwright |
+| `npm run linguas:atualizar` | Rebaixa o catálogo de línguas do Bolls.life |
 
 ### Estrutura
 
@@ -158,6 +159,8 @@ que trocar ou somar fontes no futuro não exija reescrever o app.
 | 2026-09-09 | PWA instalável (manifest + ícones, sem service worker). |
 | 2026-09-09 | Layout desktop de `/planos` em duas colunas com barra lateral de módulos. |
 | 2026-09-09 | Vitest para testes unitários; Playwright versionado em `tests/e2e`. |
+| 2026-09-09 | Catálogo de línguas servido de JSON versionado, com script de refresh. |
+| 2026-09-09 | Router Cache do Next com `staleTimes: { static: 600 }` para navegação instantânea entre capítulos já vistos. |
 
 ## Geração dos planos (IA)
 
