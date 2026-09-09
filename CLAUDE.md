@@ -74,45 +74,64 @@ mantém chaves fora do navegador e permite cache.
 | `npm start` | Sobe o build de produção |
 | `npm run lint` | Roda o ESLint |
 
-### Estrutura pretendida
+### Estrutura
 
 ```
 app/
-  page.tsx              # home
-  biblia/               # navegação livro > capítulo > versículo
-  planos/               # criar, listar e executar planos
+  page.tsx                             # home
+  biblia/[traducao]/[livro]/[capitulo] # leitura, renderizada no servidor
+  busca/                               # referência ou texto
+  marcacoes/                           # versículos marcados
+  planos/                              # criar, listar e executar planos
   api/
-    biblia/             # proxy das fontes bíblicas
-    planos/gerar/       # geração do plano via IA
-components/             # componentes de UI reutilizáveis
+    biblia/passagem/                   # trecho avulso, para as telas de plano
+    planos/gerar/                      # geração do plano via IA
+components/                            # componentes de UI reutilizáveis
 lib/
-  bible/                # camada de provider das fontes bíblicas
-  storage/              # persistência no localStorage (planos e marcações)
+  bible/                               # provider, tabela canônica, sanitização
+  planos/                              # tipos, geração por IA, localStorage
+  marcacoes.ts                         # versículos marcados no localStorage
 ```
+
+As telas de leitura e busca são Server Components que chamam `lib/bible`
+direto. Só existe rota de API onde o navegador precisa buscar algo sozinho:
+a geração do plano e o trecho avulso das telas de plano (o plano mora no
+`localStorage`, então não dá para renderizá-lo no servidor).
 
 ## Fontes de dados bíblicos
 
 **Provedor atual: [Bolls.life](https://bolls.life)** — não exige chave de API e
-oferece **152 traduções em 31 idiomas**, sendo 16 em português. É o que mais se
-aproxima do objetivo de "qualquer tradução, qualquer língua".
+oferece **152 traduções em 31 idiomas**, sendo 16 em português.
 
 Endpoints em uso:
 
 | Endpoint | Retorna |
 |----------|---------|
 | `/static/bolls/app/views/languages.json` | Catálogo de idiomas e traduções |
-| `/get-books/{translation}/` | Os 66 livros, com nome e nº de capítulos |
+| `/get-books/{translation}/` | Livros disponíveis naquela tradução |
 | `/get-text/{translation}/{book}/{chapter}/` | Versículos do capítulo |
 | `/v2/find/{translation}?search=...` | Busca textual, com `<mark>` no trecho |
 
-Os livros são identificados por número (`bookid` de 1 a 66), não por nome.
+Particularidades da fonte, já tratadas no código e que não devem ser
+"simplificadas" de volta:
+
+- **Livros são numerados de 1 a 66**, não nomeados. Os nomes que ela devolve
+  variam por tradução ("O Evangelho de João" vs "João") e alguns trazem
+  caracteres cirílicos no lugar de latinos ("Аmós", "Мiquéias"). Por isso a
+  interface usa a tabela canônica de `lib/bible/livros.ts`.
+- **O texto vem com HTML**: `<S>` de números de Strong, `<sup>` de notas,
+  `<i>` de itálico e `<mark>` na busca. Ele é renderizado como HTML, então
+  passa por `lib/bible/sanitize.ts`, que escapa tudo e reintroduz só `<i>` e
+  `<mark>`.
+- **A busca é difusa** e mistura versículos que não contêm o termo. O `total`
+  que ela devolve é o pool difuso (milhares, constante) e não corresponde ao
+  que o leitor veria. Só valem os trechos que ela marca com `<mark>`.
+- Nem toda tradução tem os 66 livros (há traduções só de Novo Testamento).
 
 > **Risco de licenciamento em aberto.** O Bolls.life serve tanto traduções em
-> domínio público (ex.: `TB10`, Almeidas antigas) quanto traduções ainda
-> protegidas por direito autoral (ex.: `NVIPT`, `NVT`, `NAA`, `MENS`). Servir o
-> catálogo inteiro **não** é o mesmo que servir só material livre. Decidir se o
-> app expõe o catálogo completo ou apenas uma lista curada de traduções livres
-> continua pendente — ver *Em aberto*.
+> domínio público quanto traduções ainda protegidas por direito autoral (ex.:
+> `NVIPT`, `NVT`, `NAA`, `MENS`). Servir o catálogo inteiro **não** é o mesmo
+> que servir só material livre. Ver *Em aberto*.
 
 O acesso fica atrás de uma **camada de provider** própria (`lib/bible`), de modo
 que trocar ou somar fontes no futuro não exija reescrever o app.
@@ -128,17 +147,45 @@ que trocar ou somar fontes no futuro não exija reescrever o app.
 | 2026-09-08 | Geração dos planos de estudo via IA. |
 | 2026-09-08 | Sem cadastro: planos e marcações ficam no `localStorage` do navegador. |
 | 2026-09-08 | Bolls.life como provedor bíblico inicial (sem chave, 152 traduções). |
+| 2026-09-08 | Gemini como provedor de IA, via `@google/genai`. |
+| 2026-09-08 | A IA indica só referências; o texto vem sempre da tradução escolhida. |
+| 2026-09-08 | Marcações guardadas por referência, sem tradução, para valerem em todas. |
+| 2026-09-08 | Playwright como ferramenta de verificação dos fluxos no navegador. |
+
+## Geração dos planos (IA)
+
+`lib/planos/gerar.ts` chama o Gemini pedindo **apenas referências**, nunca o
+texto bíblico: assim o plano vale em qualquer tradução e não há risco de
+citação inventada. Os nomes de livros que a IA devolve são resolvidos contra a
+tabela canônica e as passagens fora do canon são descartadas.
+
+A disponibilidade dos modelos oscila muito: o mesmo modelo alterna entre 200 e
+503 em minutos, e modelos antigos somem com 404. Por isso a geração percorre uma
+**cadeia de modelos** em vez de fixar um. Quando os primeiros estão
+congestionados a resposta pode levar ~30s, o que a interface precisa acomodar.
+
+Variáveis de ambiente:
+
+| Variável | Para quê |
+|----------|----------|
+| `GEMINI_API_KEY` | Obrigatória. Fica no `.env.local` e, em produção, no painel do host. |
+| `MODELO_GEMINI` | Opcional. Entra no início da cadeia de modelos. |
 
 ## Em aberto
 
-- Qual provedor de IA usar para gerar os planos.
 - **Curadoria do catálogo de traduções**: expor as 152 do Bolls.life ou apenas
   as que estão em domínio público (ver o risco de licenciamento acima).
-- Estratégia de cache do texto bíblico.
+- **Abuso da rota de geração**: ela é pública e gasta cota paga da chave do
+  Gemini. Não há limite por origem nem por IP.
 - Idiomas da interface (a interface começa em pt-BR).
 - Se um dia houver contas de usuário, como migrar o que está no `localStorage`.
+- Testes automatizados: hoje a verificação é feita com scripts avulsos de
+  Playwright, que não estão versionados.
 
 ## Estado atual
 
-Projeto Next.js recém-criado, ainda com a página inicial padrão do template.
-Nenhuma funcionalidade do escopo foi implementada.
+Todo o escopo funcional inicial está implementado e verificado no navegador:
+leitura com troca de tradução, busca por referência e por texto, marcação de
+versículos e o ciclo completo dos planos (criar, listar, executar).
+
+Ainda não publicado: falta o push para o GitHub e o deploy.
