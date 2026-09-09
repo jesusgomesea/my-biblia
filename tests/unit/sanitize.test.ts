@@ -47,6 +47,18 @@ describe('sanitizeVerseHtml', () => {
     expect(sanitizeVerseHtml('<I>fé</I>')).toBe('<i>fé</i>')
     expect(sanitizeVerseHtml('<MARK>graça</MARK>')).toBe('<mark>graça</mark>')
   })
+
+  it('preserva <br>, <br/> e <br /> (usado em versos de Salmos)', () => {
+    expect(sanitizeVerseHtml('Uma linha<br>outra linha')).toBe(
+      'Uma linha<br>outra linha',
+    )
+    expect(sanitizeVerseHtml('Uma linha<br/>outra')).toBe(
+      'Uma linha<br>outra',
+    )
+    expect(sanitizeVerseHtml('Uma linha<br />outra')).toBe(
+      'Uma linha<br>outra',
+    )
+  })
 })
 
 describe('stripHtml', () => {

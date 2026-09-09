@@ -9,7 +9,8 @@ const DROPPED_BLOCKS = [
   /<sup>[\s\S]*?<\/sup>/gi, // marcadores de nota de rodapé, sem a nota
 ]
 
-const ALLOWED = ['i', 'mark'] as const
+const ALLOWED_PAIRED = ['i', 'mark'] as const
+const ALLOWED_VOID = ['br'] as const
 
 export function sanitizeVerseHtml(raw: string): string {
   let text = raw
@@ -20,10 +21,18 @@ export function sanitizeVerseHtml(raw: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
 
-  for (const tag of ALLOWED) {
+  for (const tag of ALLOWED_PAIRED) {
     text = text
       .replace(new RegExp(`&lt;${tag}&gt;`, 'gi'), `<${tag}>`)
       .replace(new RegExp(`&lt;/${tag}&gt;`, 'gi'), `</${tag}>`)
+  }
+
+  for (const tag of ALLOWED_VOID) {
+    // Aceita <br>, <br/> e <br /> — todas as variações que a fonte devolve.
+    text = text.replace(
+      new RegExp(`&lt;${tag}\\s*\\/?&gt;`, 'gi'),
+      `<${tag}>`,
+    )
   }
 
   return text.replace(/\s+/g, ' ').trim()
