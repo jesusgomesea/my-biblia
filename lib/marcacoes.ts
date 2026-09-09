@@ -1,5 +1,7 @@
 'use client'
 
+import { sincronizarDepois } from '@/lib/dados/nuvem'
+
 export type Marcacao = {
   livro: number
   capitulo: number
@@ -33,8 +35,13 @@ function ler(): Record<string, Marcacao> {
 }
 
 function escrever(marcacoes: Record<string, Marcacao>): void {
-  window.localStorage.setItem(CHAVE, JSON.stringify(marcacoes))
+  try {
+    window.localStorage.setItem(CHAVE, JSON.stringify(marcacoes))
+  } catch {
+    // localStorage indisponível; segue em memória.
+  }
   window.dispatchEvent(new Event(EVENTO))
+  sincronizarDepois()
 }
 
 export function listarMarcacoes(): Marcacao[] {

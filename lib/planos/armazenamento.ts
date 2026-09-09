@@ -1,5 +1,6 @@
 'use client'
 
+import { sincronizarDepois } from '@/lib/dados/nuvem'
 import type { PedidoDePlano, Plano } from './tipos'
 
 const CHAVE = 'my-biblia:planos'
@@ -15,8 +16,14 @@ function ler(): Plano[] {
 }
 
 function escrever(planos: Plano[]): void {
-  window.localStorage.setItem(CHAVE, JSON.stringify(planos))
+  try {
+    window.localStorage.setItem(CHAVE, JSON.stringify(planos))
+  } catch {
+    // localStorage indisponível (quota, modo privado); segue em memória.
+  }
   window.dispatchEvent(new Event('planos-alterados'))
+  // Se o usuário estiver logado, também salva no servidor (401 é ignorado).
+  sincronizarDepois()
 }
 
 export function listarPlanos(): Plano[] {

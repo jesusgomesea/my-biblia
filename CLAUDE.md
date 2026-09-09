@@ -151,6 +151,8 @@ que trocar ou somar fontes no futuro não exija reescrever o app.
 | 2026-09-08 | Fonte bíblica sem chave de API e sem cadastro (descartada a API.Bible). |
 | 2026-09-08 | Geração dos planos de estudo via IA. |
 | 2026-09-08 | Sem cadastro: planos e marcações ficam no `localStorage` do navegador. |
+| 2026-09-09 | Auth **opcional** com Google (Auth.js v5). Deslogado usa localStorage; logado sincroniza com o servidor. |
+| 2026-09-09 | Netlify Blobs como persistência do usuário (um blob JSON por conta, chaveado pelo id do Google). |
 | 2026-09-08 | Bolls.life como provedor bíblico inicial (sem chave, 152 traduções). |
 | 2026-09-08 | Gemini como provedor de IA, via `@google/genai`. |
 | 2026-09-08 | A IA indica só referências; o texto vem sempre da tradução escolhida. |
@@ -180,6 +182,8 @@ Variáveis de ambiente:
 |----------|----------|
 | `GEMINI_API_KEY` | Obrigatória. Fica no `.env.local` e, em produção, no painel do host. |
 | `MODELO_GEMINI` | Opcional. Entra no início da cadeia de modelos. |
+| `AUTH_SECRET` | Obrigatória para o login. Segredo do cookie de sessão. |
+| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Credenciais do OAuth 2.0 do Google. |
 
 ## Em aberto
 
@@ -188,11 +192,30 @@ Variáveis de ambiente:
 - **Abuso da rota de geração**: ela é pública e gasta cota paga da chave do
   Gemini. Não há limite por origem nem por IP.
 - Idiomas da interface (a interface começa em pt-BR).
-- Se um dia houver contas de usuário, como migrar o que está no `localStorage`.
+- Sincronização: hoje o servidor vira fonte da verdade no primeiro login,
+  sem merge fino. Se o usuário editar em dois navegadores off-line, o último
+  a sincronizar sobrescreve o outro.
 - Ampliar cobertura de testes: hoje o Vitest cobre sanitização, referência
   e conversão da leitura da IA; o Playwright cobre navegação, PWA e leitura
   de planos semeados no `localStorage`. Falta cobrir busca por texto (rede)
   e o fluxo real de criação de plano (requer mock do Gemini).
+
+## Autenticação e persistência
+
+Login com Google via **Auth.js v5** em `auth.ts`. Sessão em cookie JWT
+(sem tabela de usuários — o id do Google é a chave).
+
+Enquanto o usuário está deslogado tudo continua no `localStorage` (o app
+funciona 100% sem entrar). Assim que ele entra, o `components/sincronizador.tsx`
+decide entre baixar o snapshot da nuvem ou subir o que já existe no
+navegador — a partir daí toda escrita local também aciona
+`sincronizarDepois()` que faz PUT em `/api/dados`.
+
+Dados ficam no **Netlify Blobs** (store `usuarios`), um JSON por conta:
+`{ planos, marcacoes }`. Ver `lib/dados/servidor.ts`.
+
+Para testar localmente é preciso `netlify dev` no lugar de `next dev`,
+senão o store não é injetado.
 
 ## Publicação
 
