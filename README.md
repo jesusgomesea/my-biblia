@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# my-biblia
 
-## Getting Started
+Site aberto para ler a Bíblia e montar planos de estudo no seu ritmo.
 
-First, run the development server:
+Você diz **sobre o que quer refletir**, em **quantos dias** e **quantos minutos
+por dia** tem disponível — e o roteiro sai pronto, dia a dia.
+
+## O que dá para fazer
+
+- **Ler** em 152 traduções, de 31 idiomas, navegando por livro e capítulo.
+- **Buscar** por referência (`João 3:16`, `Pv 3`) ou por palavra no texto.
+- **Marcar versículos** com um toque no número. A marca vale em qualquer
+  tradução, porque é guardada pela referência, não pelo texto.
+- **Montar planos de estudo** a partir de temas, duração e tempo diário, e
+  acompanhar o progresso.
+
+Não há cadastro. Planos e marcações ficam no `localStorage` do seu navegador —
+o que significa que são só seus, mas também que não acompanham você para outro
+aparelho.
+
+## Como o plano é montado
+
+A IA recebe os temas, os dias e os minutos, e devolve **apenas as referências**
+de cada dia, mais um foco e uma pergunta para reflexão. O texto bíblico nunca
+vem dela: é buscado na tradução que você escolheu. Assim o plano não corre o
+risco de citar um versículo que não existe, e continua válido se você trocar de
+tradução no meio do caminho.
+
+## Rodando localmente
+
+Requer Node.js 20 ou superior.
 
 ```bash
+npm install
+cp .env.example .env.local   # e preencha a chave
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+O site sobe em http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Variáveis de ambiente
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variável | Obrigatória | Para quê |
+|----------|-------------|----------|
+| `GEMINI_API_KEY` | sim | Gera os planos de estudo. Crie a sua em [Google AI Studio](https://aistudio.google.com/apikey). |
+| `MODELO_GEMINI` | não | Força um modelo específico. Sem ela, o app percorre uma lista de modelos até um responder. |
 
-## Learn More
+Sem a chave o site continua funcionando para leitura, busca e marcações — só a
+criação de planos falha.
 
-To learn more about Next.js, take a look at the following resources:
+### Outros comandos
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run build   # build de produção
+npm start       # sobe o build
+npm run lint    # ESLint
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Stack
 
-## Deploy on Vercel
+Next.js 16 (App Router), React, TypeScript e Tailwind CSS v4. As telas de
+leitura e busca são renderizadas no servidor; as de plano e marcação rodam no
+navegador, já que os dados moram lá.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+O texto bíblico vem do [Bolls.life](https://bolls.life), atrás de uma camada de
+provider em `lib/bible` — trocar de fonte é trocar uma linha.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Publicando
+
+Funciona em qualquer host que rode Next.js com servidor (Netlify e Vercel
+suportam sem configuração extra). Não use `output: 'export'`: as telas de
+leitura e as rotas de API precisam de servidor.
+
+Lembre de cadastrar a `GEMINI_API_KEY` nas variáveis de ambiente do host.
+
+## Sobre as traduções
+
+O catálogo do Bolls.life mistura traduções em domínio público com traduções
+ainda protegidas por direito autoral. Este projeto expõe o catálogo como ele
+vem. Se você for publicar sua própria instância, vale conferir quais traduções
+pode servir na sua jurisdição.
