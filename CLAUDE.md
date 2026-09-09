@@ -151,8 +151,8 @@ que trocar ou somar fontes no futuro não exija reescrever o app.
 | 2026-09-08 | Fonte bíblica sem chave de API e sem cadastro (descartada a API.Bible). |
 | 2026-09-08 | Geração dos planos de estudo via IA. |
 | 2026-09-08 | Sem cadastro: planos e marcações ficam no `localStorage` do navegador. |
-| 2026-09-09 | Auth **opcional** com Google (Auth.js v5). Deslogado usa localStorage; logado sincroniza com o servidor. |
-| 2026-09-09 | Netlify Blobs como persistência do usuário (um blob JSON por conta, chaveado pelo id do Google). |
+| 2026-09-09 | Auth **opcional** com email + senha (Auth.js v5 + Credentials). Deslogado usa localStorage; logado sincroniza com o servidor. |
+| 2026-09-09 | Contas guardadas no Netlify Blobs (store `contas`), com senha em bcrypt. Dados do usuário em outro store (`usuarios`), chaveado pelo id gerado no cadastro. |
 | 2026-09-08 | Bolls.life como provedor bíblico inicial (sem chave, 152 traduções). |
 | 2026-09-08 | Gemini como provedor de IA, via `@google/genai`. |
 | 2026-09-08 | A IA indica só referências; o texto vem sempre da tradução escolhida. |
@@ -183,7 +183,6 @@ Variáveis de ambiente:
 | `GEMINI_API_KEY` | Obrigatória. Fica no `.env.local` e, em produção, no painel do host. |
 | `MODELO_GEMINI` | Opcional. Entra no início da cadeia de modelos. |
 | `AUTH_SECRET` | Obrigatória para o login. Segredo do cookie de sessão. |
-| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Credenciais do OAuth 2.0 do Google. |
 
 ## Em aberto
 
@@ -202,8 +201,12 @@ Variáveis de ambiente:
 
 ## Autenticação e persistência
 
-Login com Google via **Auth.js v5** em `auth.ts`. Sessão em cookie JWT
-(sem tabela de usuários — o id do Google é a chave).
+Login com **email + senha** via **Auth.js v5** (`Credentials`) em `auth.ts`.
+Sessão em cookie JWT.
+
+Contas ficam no Netlify Blobs (store `contas`), chaveadas pelo email
+normalizado. Senha guardada como hash `bcrypt` (custo 10). Ver
+`lib/dados/contas.ts`.
 
 Enquanto o usuário está deslogado tudo continua no `localStorage` (o app
 funciona 100% sem entrar). Assim que ele entra, o `components/sincronizador.tsx`
@@ -211,8 +214,11 @@ decide entre baixar o snapshot da nuvem ou subir o que já existe no
 navegador — a partir daí toda escrita local também aciona
 `sincronizarDepois()` que faz PUT em `/api/dados`.
 
-Dados ficam no **Netlify Blobs** (store `usuarios`), um JSON por conta:
+Dados do usuário ficam em outro store, `usuarios`, um JSON por conta:
 `{ planos, marcacoes }`. Ver `lib/dados/servidor.ts`.
+
+A rota `/api/auth/cadastro` também é limitada por IP no `netlify.toml`
+(5 por minuto) para não virar alvo de scripts de cadastro em massa.
 
 Para testar localmente é preciso `netlify dev` no lugar de `next dev`,
 senão o store não é injetado.

@@ -1,7 +1,8 @@
-# Este arquivo existe por um motivo só: limitar a taxa da rota de geração de
-# plano, que é pública e consome cota paga da chave do Gemini. O restante da
-# configuração do Next.js continua por conta do Netlify — não acrescente build
-# command, publish directory nem versão do adaptador aqui.
+# Este arquivo existe para limitar a taxa de rotas públicas que consomem
+# recursos pagos ou de storage — geração de plano (cota Gemini) e cadastro
+# (Netlify Blobs / bots). O restante da configuração do Next.js continua
+# por conta do Netlify — não acrescente build command, publish directory
+# nem versão do adaptador aqui.
 #
 # O plano gratuito permite duas regras deste tipo por projeto.
 [[redirects]]
@@ -12,5 +13,16 @@
 
   [redirects.rate_limit]
     window_limit = 10
+    window_size = 60
+    aggregate_by = ["ip", "domain"]
+
+[[redirects]]
+  from = "/api/auth/cadastro"
+  to = "/api/auth/cadastro"
+  status = 200
+  force = true
+
+  [redirects.rate_limit]
+    window_limit = 5
     window_size = 60
     aggregate_by = ["ip", "domain"]

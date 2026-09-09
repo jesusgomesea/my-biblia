@@ -1,6 +1,7 @@
 'use client'
 
-import { signIn, signOut, useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { signOut, useSession } from 'next-auth/react'
 import { useState } from 'react'
 
 export default function MenuUsuario() {
@@ -13,18 +14,18 @@ export default function MenuUsuario() {
 
   if (status !== 'authenticated' || !sessao?.user) {
     return (
-      <button
-        type="button"
-        onClick={() => signIn('google')}
+      <Link
+        href="/entrar"
         className="rounded-md border border-borda px-3 py-1.5 text-sm hover:border-accent"
       >
         Entrar
-      </button>
+      </Link>
     )
   }
 
-  const nome = sessao.user.name ?? sessao.user.email ?? 'Você'
-  const foto = sessao.user.image
+  const email = sessao.user.email ?? 'Você'
+  const inicial = email.slice(0, 1).toUpperCase()
+  const rotulo = email.split('@')[0]
 
   return (
     <div className="relative">
@@ -35,20 +36,10 @@ export default function MenuUsuario() {
         aria-expanded={aberto}
         className="flex items-center gap-2 rounded-full border border-borda p-1 pr-3 hover:border-accent"
       >
-        {foto ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={foto}
-            alt=""
-            className="size-6 rounded-full"
-            referrerPolicy="no-referrer"
-          />
-        ) : (
-          <span className="flex size-6 items-center justify-center rounded-full bg-accent-soft text-xs text-accent">
-            {nome.slice(0, 1).toUpperCase()}
-          </span>
-        )}
-        <span className="max-w-32 truncate text-sm">{nome.split(' ')[0]}</span>
+        <span className="flex size-6 items-center justify-center rounded-full bg-accent-soft text-xs text-accent">
+          {inicial}
+        </span>
+        <span className="max-w-32 truncate text-sm">{rotulo}</span>
       </button>
 
       {aberto && (

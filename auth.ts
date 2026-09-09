@@ -1,23 +1,36 @@
 import NextAuth from 'next-auth'
-import Google from 'next-auth/providers/google'
+import Credentials from 'next-auth/providers/credentials'
+import { verificarSenha } from '@/lib/dados/contas'
 
 /**
- * Auth.js v5. Sessão em cookie JWT (sem banco), com o id do Google usado
- * como chave dos dados do usuário no Netlify Blobs.
+ * Auth.js v5 com login por email + senha próprio. Sessão em cookie JWT.
+ * As contas ficam no Netlify Blobs (store `contas`, ver lib/dados/contas.ts).
  *
- * `trustHost: true` é necessário no Netlify porque o host de produção não é
- * automaticamente considerado confiável — a v5 exige isso explicitamente.
+ * `trustHost: true` é preciso no Netlify — a v5 não considera o host de
+ * produção confiável automaticamente.
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
-  providers: [Google],
   session: { strategy: 'jwt' },
+  providers: [
+    Credentials({
+      name: 'Email e senha',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        senha: { label: 'Senha', type: 'password' },
+      },
+      async authorize(credentials) {
+        const email = String(credentials?.email ?? '')
+        const senha = String(credentials?.senha ?? '')
+        const conta = await verificarSenha(email, senha)
+        if (!conta) return null
+        return { id: conta.id, email: conta.email }
+      },
+    }),
+  ],
   callbacks: {
-    async jwt({ token, account, profile }) {
-      // Na primeira autenticação, guardamos o id estável do Google.
-      if (account?.provider === 'google' && profile?.sub) {
-        token.userId = profile.sub
-      }
+    async jwt({ token, user }) {
+      if (user?.id) token.userId = user.id
       return token
     },
     async session({ session, token }) {
