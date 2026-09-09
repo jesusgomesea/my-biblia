@@ -2,6 +2,9 @@
 
 > Documento vivo. Atualize este arquivo sempre que uma decisão de escopo,
 > arquitetura ou stack mudar.
+>
+> Trabalho em andamento e "o que fazer ao chegar em outra máquina" mora em
+> [PROXIMOS-PASSOS.md](./PROXIMOS-PASSOS.md).
 
 ## Visão geral
 
