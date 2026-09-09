@@ -103,7 +103,7 @@ function PainelBoasVindas({ planos }: { planos: Plano[] | null }) {
   )
 
   return (
-    <div className="mx-auto max-w-3xl px-8 py-12">
+    <div className="mx-auto max-w-5xl px-6 py-12 lg:px-10">
       <p className="text-xs uppercase tracking-wider text-muted">Meus planos</p>
       <h1 className="mt-2 font-serif text-4xl font-semibold">
         Escolha um plano à esquerda ou monte um novo.
