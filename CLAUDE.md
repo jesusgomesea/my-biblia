@@ -182,10 +182,23 @@ Variáveis de ambiente:
 - Testes automatizados: hoje a verificação é feita com scripts avulsos de
   Playwright, que não estão versionados.
 
+## Publicação
+
+| Onde | O quê |
+|------|-------|
+| Repositório | https://github.com/jesusgomesea/my-biblia (público) |
+| Produção | https://my-biblia.netlify.app |
+
+O Netlify detecta o Next.js sozinho e aplica o adaptador OpenNext — **não** crie
+`netlify.toml` nem fixe a versão do adaptador, a própria documentação
+desaconselha. Também não use `output: 'export'`: as telas de leitura e as rotas
+de API precisam de servidor.
+
+A `GEMINI_API_KEY` é cadastrada nas variáveis de ambiente do painel do Netlify,
+já que o `.env.local` não é versionado.
+
 ## Estado atual
 
-Todo o escopo funcional inicial está implementado e verificado no navegador:
+Todo o escopo funcional inicial está implementado e verificado **em produção**:
 leitura com troca de tradução, busca por referência e por texto, marcação de
 versículos e o ciclo completo dos planos (criar, listar, executar).
-
-Ainda não publicado: falta o push para o GitHub e o deploy.
