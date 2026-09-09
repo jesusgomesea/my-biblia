@@ -9,4 +9,5 @@ export const bible: BibleProvider = bolls
 
 export * from './types'
 export * from './livros'
+export * from './referencia'
 export { sanitizeVerseHtml, stripHtml } from './sanitize'

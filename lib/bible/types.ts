@@ -33,7 +33,8 @@ export type SearchHit = {
 
 export type SearchResults = {
   hits: SearchHit[]
-  total: number
+  /** A fonte não informa um total confiável; isto indica que há mais além dos exibidos. */
+  truncado: boolean
 }
 
 export interface BibleProvider {

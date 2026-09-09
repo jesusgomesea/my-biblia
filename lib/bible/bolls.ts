@@ -41,7 +41,7 @@ type RawLanguage = { language: string; translations: RawTranslation[] }
 type RawBook = { bookid: number; name: string; chapters: number }
 type RawVerse = { verse: number; text: string }
 type RawHit = { book: number; chapter: number; verse: number; text: string }
-type RawSearch = { results: RawHit[]; total: number }
+type RawSearch = { results: RawHit[] }
 
 export const bolls: BibleProvider = {
   async listLanguages(): Promise<Language[]> {
@@ -90,22 +90,31 @@ export const bolls: BibleProvider = {
     }))
   },
 
+  /**
+   * A fonte faz busca difusa e mistura versículos que não contêm o termo. Só os
+   * que ela marca com <mark> casaram de verdade, então pedimos um lote maior e
+   * descartamos o resto. O campo `total` que ela devolve é o tamanho do pool
+   * difuso (milhares, sempre o mesmo) e não serve para exibir.
+   */
   async search(
     translation: string,
     query: string,
     limit = 50,
   ): Promise<SearchResults> {
+    const desejado = assertNumber(limit, 100, 'Limite')
     const params = new URLSearchParams({
       search: query,
-      limit: String(assertNumber(limit, 200, 'Limite')),
+      limit: String(desejado * 2),
     })
     const raw = await request<RawSearch>(
       `/v2/find/${assertTranslation(translation)}?${params}`,
       60 * 60,
     )
+
+    const casaram = raw.results.filter((hit) => hit.text.includes('<mark>'))
     return {
-      total: raw.total,
-      hits: raw.results.map((hit) => ({
+      truncado: casaram.length > desejado,
+      hits: casaram.slice(0, desejado).map((hit) => ({
         book: hit.book,
         chapter: hit.chapter,
         verse: hit.verse,

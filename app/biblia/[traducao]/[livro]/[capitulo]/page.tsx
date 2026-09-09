@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import CampoBusca from "@/components/campo-busca";
 import ListaVersiculos from "@/components/lista-versiculos";
 import SeletorPassagem from "@/components/seletor-passagem";
 import { bible, livroPorId, type Book } from "@/lib/bible";
@@ -46,13 +47,16 @@ export default async function Capitulo(
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <SeletorPassagem
-        linguas={linguas}
-        livros={livros}
-        traducao={traducao}
-        livro={idLivro}
-        capitulo={numCapitulo}
-      />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <SeletorPassagem
+          linguas={linguas}
+          livros={livros}
+          traducao={traducao}
+          livro={idLivro}
+          capitulo={numCapitulo}
+        />
+        <CampoBusca traducao={traducao} />
+      </div>
 
       <h1 className="mt-8 font-serif text-2xl font-semibold">
         {atual.name}{" "}

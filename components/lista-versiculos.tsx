@@ -37,7 +37,8 @@ export default function ListaVersiculos({
         return (
           <p
             key={versiculo.number}
-            className={`flex gap-3 rounded-md px-2 py-1 transition-colors ${
+            id={`v${versiculo.number}`}
+            className={`flex scroll-mt-6 gap-3 rounded-md px-2 py-1 transition-colors ${
               marcado ? 'bg-accent-soft' : ''
             }`}
           >
