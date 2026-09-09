@@ -189,10 +189,18 @@ Variáveis de ambiente:
 | Repositório | https://github.com/jesusgomesea/my-biblia (público) |
 | Produção | https://my-biblia.netlify.app |
 
-O Netlify detecta o Next.js sozinho e aplica o adaptador OpenNext — **não** crie
-`netlify.toml` nem fixe a versão do adaptador, a própria documentação
-desaconselha. Também não use `output: 'export'`: as telas de leitura e as rotas
-de API precisam de servidor.
+O Netlify detecta o Next.js sozinho e aplica o adaptador OpenNext. Não fixe a
+versão do adaptador nem acrescente build command ou publish directory ao
+`netlify.toml` — a própria documentação desaconselha. Também não use
+`output: 'export'`: as telas de leitura e as rotas de API precisam de servidor.
+
+Existe um `netlify.toml` **por um motivo único**: limitar a taxa de
+`/api/planos/gerar`, que é pública e gasta cota paga do Gemini. A documentação
+do Netlify não confirma que o limite nativo vale para rotas do Next servidas
+pelo adaptador, mas foi verificado em produção: com o limite em 10 por minuto,
+as requisições passam a receber 429 por volta da 17ª (o bloqueio leva alguns
+segundos para entrar) e a janela se recupera sozinha. O plano gratuito permite
+duas regras dessas por projeto.
 
 A `GEMINI_API_KEY` é cadastrada nas variáveis de ambiente do painel do Netlify,
 já que o `.env.local` não é versionado.
