@@ -73,6 +73,10 @@ mantém chaves fora do navegador e permite cache.
 | `npm run build` | Build de produção |
 | `npm start` | Sobe o build de produção |
 | `npm run lint` | Roda o ESLint |
+| `npm test` | Roda os testes unitários (Vitest) |
+| `npm run test:watch` | Vitest em modo watch |
+| `npm run test:e2e` | Roda os testes end-to-end (Playwright) |
+| `npm run test:e2e:install` | Instala os navegadores do Playwright |
 
 ### Estrutura
 
@@ -151,6 +155,9 @@ que trocar ou somar fontes no futuro não exija reescrever o app.
 | 2026-09-08 | A IA indica só referências; o texto vem sempre da tradução escolhida. |
 | 2026-09-08 | Marcações guardadas por referência, sem tradução, para valerem em todas. |
 | 2026-09-08 | Playwright como ferramenta de verificação dos fluxos no navegador. |
+| 2026-09-09 | PWA instalável (manifest + ícones, sem service worker). |
+| 2026-09-09 | Layout desktop de `/planos` em duas colunas com barra lateral de módulos. |
+| 2026-09-09 | Vitest para testes unitários; Playwright versionado em `tests/e2e`. |
 
 ## Geração dos planos (IA)
 
@@ -179,8 +186,10 @@ Variáveis de ambiente:
   Gemini. Não há limite por origem nem por IP.
 - Idiomas da interface (a interface começa em pt-BR).
 - Se um dia houver contas de usuário, como migrar o que está no `localStorage`.
-- Testes automatizados: hoje a verificação é feita com scripts avulsos de
-  Playwright, que não estão versionados.
+- Ampliar cobertura de testes: hoje o Vitest cobre sanitização, referência
+  e conversão da leitura da IA; o Playwright cobre navegação, PWA e leitura
+  de planos semeados no `localStorage`. Falta cobrir busca por texto (rede)
+  e o fluxo real de criação de plano (requer mock do Gemini).
 
 ## Publicação
 

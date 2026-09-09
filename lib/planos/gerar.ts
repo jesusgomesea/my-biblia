@@ -79,7 +79,7 @@ type DiaCru = {
 type PlanoCru = { titulo: string; resumo: string; dias: DiaCru[] }
 
 /** A IA devolve nomes de livros em texto livre; aqui viram ids validados. */
-function converterLeitura(crua: LeituraCrua): Leitura | null {
+export function converterLeitura(crua: LeituraCrua): Leitura | null {
   const livro = acharLivro(crua.livro ?? '')
   if (!livro) return null
 
