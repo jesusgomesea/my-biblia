@@ -29,7 +29,7 @@ export default function ListaVersiculos({
   }, [])
 
   return (
-    <article className="mt-6 space-y-1 font-serif text-lg/8">
+    <article className="mt-6 space-y-2 font-serif text-lg/8">
       {versiculos.map((versiculo) => {
         const marcado = marcadas.has(
           chaveDaMarcacao(livro, capitulo, versiculo.number),
@@ -55,7 +55,7 @@ export default function ListaVersiculos({
                   marcadoEm: new Date().toISOString(),
                 })
               }
-              className={`w-7 shrink-0 self-start pt-1.5 text-right font-sans text-xs ${
+              className={`relative w-7 shrink-0 self-start pt-1.5 text-right font-sans text-xs after:absolute after:-inset-x-2 after:-inset-y-3 after:content-[''] ${
                 marcado ? 'text-accent' : 'text-muted hover:text-accent'
               }`}
             >

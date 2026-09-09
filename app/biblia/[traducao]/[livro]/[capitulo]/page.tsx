@@ -26,11 +26,15 @@ export default async function Capitulo(
   const numCapitulo = Number(capitulo);
   if (!Number.isInteger(idLivro) || !Number.isInteger(numCapitulo)) notFound();
 
-  const [linguas, disponiveis, versiculos] = await Promise.all([
+  // Uma tradução ou capítulo que não existe faz a fonte externa responder com
+  // erro; sem isto ele subiria como 500 em vez da página de não encontrado.
+  const dados = await Promise.all([
     bible.listLanguages(),
     bible.listBooks(traducao),
     bible.getChapter(traducao, idLivro, numCapitulo),
-  ]);
+  ]).catch(() => null);
+  if (!dados) notFound();
+  const [linguas, disponiveis, versiculos] = dados;
 
   // A fonte devolve nomes que variam por tradução e com caracteres cirílicos
   // trocados em alguns livros, então exibimos os nomes canônicos em português.

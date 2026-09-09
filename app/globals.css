@@ -32,7 +32,6 @@
   --color-accent-soft: var(--accent-soft);
   --font-sans: var(--font-geist-sans);
   --font-serif: var(--font-literata);
-  --font-mono: var(--font-geist-mono);
 }
 
 body {
