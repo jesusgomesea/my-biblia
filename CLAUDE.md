@@ -154,8 +154,9 @@ que trocar ou somar fontes no futuro não exija reescrever o app.
 | 2026-09-08 | Fonte bíblica sem chave de API e sem cadastro (descartada a API.Bible). |
 | 2026-09-08 | Geração dos planos de estudo via IA. |
 | 2026-09-08 | Sem cadastro: planos e marcações ficam no `localStorage` do navegador. |
-| 2026-09-09 | Auth **opcional** com email + senha (Auth.js v5 + Credentials). Deslogado usa localStorage; logado sincroniza com o servidor. |
-| 2026-09-09 | Contas guardadas no Netlify Blobs (store `contas`), com senha em bcrypt. Dados do usuário em outro store (`usuarios`), chaveado pelo id gerado no cadastro. |
+| 2026-09-09 | Auth **opcional**: deslogado usa localStorage; logado sincroniza com o servidor. |
+| 2026-09-09 | ~~Auth.js v5 + Credentials, contas em Blobs com bcrypt~~ — substituído no mesmo dia por Netlify Identity. |
+| 2026-09-09 | **Netlify Identity** (`@netlify/identity`) como provedor de contas: traz confirmação de email e recuperação de senha nativas, e os usuários passam a ser administráveis pelo painel. Dados seguem no store `usuarios`, chaveado pelo id do Identity. |
 | 2026-09-08 | Bolls.life como provedor bíblico inicial (sem chave, 152 traduções). |
 | 2026-09-08 | Gemini como provedor de IA, via `@google/genai`. |
 | 2026-09-08 | A IA indica só referências; o texto vem sempre da tradução escolhida. |
@@ -185,7 +186,6 @@ Variáveis de ambiente:
 |----------|----------|
 | `GEMINI_API_KEY` | Obrigatória. Fica no `.env.local` e, em produção, no painel do host. |
 | `MODELO_GEMINI` | Opcional. Entra no início da cadeia de modelos. |
-| `AUTH_SECRET` | Obrigatória para o login. Segredo do cookie de sessão. |
 
 ## Em aberto
 
@@ -204,12 +204,46 @@ Variáveis de ambiente:
 
 ## Autenticação e persistência
 
-Login com **email + senha** via **Auth.js v5** (`Credentials`) em `auth.ts`.
-Sessão em cookie JWT.
+Login com **email + senha** via **Netlify Identity**, usando o pacote
+`@netlify/identity` — a biblioteca *headless* (não é o antigo
+`netlify-identity-widget`, nem o `gotrue-js` de baixo nível, ambos
+desaconselhados para projeto novo).
 
-Contas ficam no Netlify Blobs (store `contas`), chaveadas pelo email
-normalizado. Senha guardada como hash `bcrypt` (custo 10). Ver
-`lib/dados/contas.ts`.
+**O Identity precisa estar ligado no painel** (Site configuration → Identity).
+Não há segredo nosso nem variável de ambiente: o endpoint
+(`/.netlify/identity`) vem do runtime do Netlify. Por isso, localmente, é
+`netlify dev` e não `next dev` — vale tanto para o login quanto para os Blobs.
+
+Divisão adotada, que é a recomendada para frameworks com SSR:
+
+- **Mutações no navegador**: `login()`, `signup()`, `logout()`,
+  `updateUser()`. Elas falam direto com o Identity e escrevem o cookie
+  `nf_jwt`.
+- **Leitura no servidor**: `getUser()` em `app/api/dados/route.ts`, que valida
+  o cookie da requisição.
+
+Depois de qualquer mutação de auth a navegação é feita com
+`window.location.href`, **nunca** `router.push()`: a navegação suave do Next
+não carrega o cookie recém-escrito, e o servidor continuaria vendo a sessão
+antiga. Existe uma regra do ESLint que reclama disso; os pontos onde ela é
+silenciada trazem o motivo no comentário.
+
+`components/provedor-sessao.tsx` faz o papel do antigo `SessionProvider`:
+junta `getUser()` e `onAuthChange()` num contexto e expõe `useSessao()`. A
+sessão é resolvida **no cliente** de propósito — chamar `getUser()` num Server
+Component tornaria a página dinâmica, e as telas de leitura são
+prerenderizadas por decisão de performance.
+
+Esse mesmo provedor trata os links que o Identity manda por email
+(confirmação, recuperação, troca de email). Eles voltam com o token no hash da
+URL e podem cair em qualquer página, então o `handleAuthCallback()` mora no
+layout raiz, e não numa rota `/callback`. Recuperação de senha cai em
+`/nova-senha`; o pedido do link fica em `/recuperar-senha`.
+
+Confirmação de email e recuperação de senha são do próprio Identity: não
+precisamos de serviço de email. Se `autoconfirm` estiver desligado (o padrão),
+o cadastro **não** abre sessão — o usuário recebe um link e só entra depois de
+clicar.
 
 Enquanto o usuário está deslogado tudo continua no `localStorage` (o app
 funciona 100% sem entrar). Assim que ele entra, o `components/sincronizador.tsx`
@@ -217,14 +251,9 @@ decide entre baixar o snapshot da nuvem ou subir o que já existe no
 navegador — a partir daí toda escrita local também aciona
 `sincronizarDepois()` que faz PUT em `/api/dados`.
 
-Dados do usuário ficam em outro store, `usuarios`, um JSON por conta:
-`{ planos, marcacoes }`. Ver `lib/dados/servidor.ts`.
-
-A rota `/api/auth/cadastro` também é limitada por IP no `netlify.toml`
-(5 por minuto) para não virar alvo de scripts de cadastro em massa.
-
-Para testar localmente é preciso `netlify dev` no lugar de `next dev`,
-senão o store não é injetado.
+Dados do usuário ficam no Netlify Blobs, store `usuarios`, um JSON por conta:
+`{ planos, marcacoes }`, chaveado pelo id do Identity. Ver
+`lib/dados/servidor.ts`.
 
 ## Publicação
 

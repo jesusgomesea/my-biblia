@@ -1,15 +1,20 @@
-import { auth } from '@/auth'
+import { getUser } from '@netlify/identity'
 import { gravarDados, lerDados, type DadosDoUsuario } from '@/lib/dados/servidor'
+
+/**
+ * `getUser()` le o cookie `nf_jwt` da requisicao e valida contra o Identity.
+ * Devolve null em qualquer falha, entao ausencia de usuario e sempre 401.
+ */
 
 /** Retorna os dados do usuário logado. 401 se não estiver autenticado. */
 export async function GET() {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const usuario = await getUser()
+  if (!usuario) {
     return Response.json({ erro: 'Não autenticado' }, { status: 401 })
   }
 
   try {
-    const dados = await lerDados(session.user.id)
+    const dados = await lerDados(usuario.id)
     return Response.json(dados)
   } catch (erro) {
     console.error('Falha ao ler dados do usuário:', erro)
@@ -19,8 +24,8 @@ export async function GET() {
 
 /** Substitui o snapshot do usuário. Escrita atômica, sem merge. */
 export async function PUT(request: Request) {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const usuario = await getUser()
+  if (!usuario) {
     return Response.json({ erro: 'Não autenticado' }, { status: 401 })
   }
 
@@ -38,7 +43,7 @@ export async function PUT(request: Request) {
   }
 
   try {
-    await gravarDados(session.user.id, dados)
+    await gravarDados(usuario.id, dados)
     return Response.json({ ok: true })
   } catch (erro) {
     console.error('Falha ao gravar dados do usuário:', erro)

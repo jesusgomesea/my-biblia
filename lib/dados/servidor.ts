@@ -3,7 +3,7 @@ import type { Plano } from '@/lib/planos/tipos'
 import type { Marcacao } from '@/lib/marcacoes'
 
 /**
- * Um blob por usuário, chaveado pelo id do Google. Guarda tudo que ele viu
+ * Um blob por usuário, chaveado pelo id do Netlify Identity. Guarda tudo que ele viu
  * sentido em salvar: planos e marcações. O formato é pequeno o bastante para
  * caber num só objeto e ainda dar bem menos que o teto por blob do Netlify.
  */

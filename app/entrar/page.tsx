@@ -1,9 +1,10 @@
 'use client'
 
-import { signIn, useSession } from 'next-auth/react'
+import { AuthError, login, signup } from '@netlify/identity'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
+import { useSessao } from '@/components/provedor-sessao'
 
 type Modo = 'entrar' | 'cadastrar'
 
@@ -22,7 +23,7 @@ export default function Entrar() {
 }
 
 function FormularioEntrar() {
-  const { status } = useSession()
+  const { usuario } = useSessao()
   const params = useSearchParams()
   const paraOnde = params.get('callbackUrl') ?? '/'
 
@@ -30,53 +31,41 @@ function FormularioEntrar() {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState<string | null>(null)
+  const [aviso, setAviso] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
   useEffect(() => {
-    if (status === 'authenticated') {
-      window.location.href = paraOnde
-    }
-  }, [status, paraOnde])
+    if (usuario) window.location.href = paraOnde
+  }, [usuario, paraOnde])
 
   async function aoEnviar(evento: React.FormEvent) {
     evento.preventDefault()
     setErro(null)
+    setAviso(null)
     setEnviando(true)
 
     try {
       if (modo === 'cadastrar') {
-        const resposta = await fetch('/api/auth/cadastro', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ email, senha }),
-        })
-        if (!resposta.ok) {
-          const { erro } = await resposta
-            .json()
-            .catch(() => ({ erro: 'Falha ao criar conta.' }))
-          setErro(erro)
+        const criado = await signup(email, senha)
+
+        // Com a confirmação por email ligada (padrão do Identity), o cadastro
+        // não abre sessão: o usuário precisa clicar no link antes de entrar.
+        if (!criado.confirmedAt) {
+          setAviso(
+            `Conta criada. Enviamos um link de confirmação para ${email} — ` +
+              'clique nele para poder entrar.',
+          )
           return
         }
+      } else {
+        await login(email, senha)
       }
 
-      const resultado = await signIn('credentials', {
-        email,
-        senha,
-        redirect: false,
-      })
-
-      if (resultado?.error) {
-        setErro(
-          modo === 'cadastrar'
-            ? 'Conta criada, mas não conseguimos entrar. Tente entrar manualmente.'
-            : 'Email ou senha incorretos.',
-        )
-        return
-      }
-
+      // Navegação completa, e não router.push: o cookie de sessão recém-criado
+      // só chega ao servidor num carregamento inteiro da página.
       window.location.href = paraOnde
-    } catch {
-      setErro('Falha inesperada. Tente de novo.')
+    } catch (erro) {
+      setErro(mensagemDoErro(erro, modo))
     } finally {
       setEnviando(false)
     }
@@ -90,7 +79,7 @@ function FormularioEntrar() {
       <p className="mt-3 text-muted">
         {modo === 'entrar'
           ? 'Entrar sincroniza seus planos e marcações entre dispositivos.'
-          : 'Basta um email e uma senha — sem verificação por email.'}
+          : 'Basta um email e uma senha.'}{' '}
         Você pode continuar usando o site sem entrar; os dados ficam apenas
         neste navegador.
       </p>
@@ -109,6 +98,7 @@ function FormularioEntrar() {
             onClick={() => {
               setModo(m)
               setErro(null)
+              setAviso(null)
             }}
             className={`flex-1 rounded-md px-3 py-1.5 text-sm ${
               modo === m
@@ -161,6 +151,15 @@ function FormularioEntrar() {
           </p>
         )}
 
+        {aviso && (
+          <p
+            role="status"
+            className="rounded-md border border-borda bg-accent-soft/40 p-3 text-sm"
+          >
+            {aviso}
+          </p>
+        )}
+
         <button
           type="submit"
           disabled={enviando}
@@ -170,18 +169,46 @@ function FormularioEntrar() {
             ? 'Aguarde…'
             : modo === 'entrar'
               ? 'Entrar'
-              : 'Criar conta e entrar'}
+              : 'Criar conta'}
         </button>
       </form>
 
+      {modo === 'entrar' && (
+        <Link
+          href="/recuperar-senha"
+          className="mt-4 inline-block text-sm text-accent hover:underline"
+        >
+          Esqueci minha senha
+        </Link>
+      )}
+
       <Link
         href="/"
-        className="mt-8 inline-block text-sm text-muted hover:text-foreground"
+        className="mt-8 block text-sm text-muted hover:text-foreground"
       >
         ← Voltar
       </Link>
     </div>
   )
+}
+
+/**
+ * O Identity devolve mensagens em inglês e voltadas a quem programa. Traduz as
+ * que o usuário realmente pode encontrar e guarda o resto atrás de um texto
+ * genérico.
+ */
+function mensagemDoErro(erro: unknown, modo: Modo): string {
+  if (erro instanceof AuthError) {
+    if (erro.status === 401 || erro.status === 400) {
+      return modo === 'entrar'
+        ? 'Email ou senha incorretos. Se você acabou de se cadastrar, confirme o email primeiro.'
+        : 'Não foi possível criar a conta com esses dados.'
+    }
+    if (erro.status === 422) {
+      return 'Já existe uma conta com este email.'
+    }
+  }
+  return 'Falha inesperada. Tente de novo em instantes.'
 }
 
 function EsqueletoEntrar() {
