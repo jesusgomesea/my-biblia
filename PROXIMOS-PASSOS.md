@@ -9,10 +9,12 @@
 Toda a base funcional e a onda inicial de melhorias estão no `main`. Últimos
 commits, do mais novo para o mais antigo:
 
-- (este commit) — **Migra a autenticação para o Netlify Identity.** Saem
-  `next-auth`, `bcryptjs`, `auth.ts`, `lib/dados/contas.ts` e as rotas
-  `/api/auth/*`; entra `@netlify/identity`. Ganha recuperação de senha e
-  confirmação de email nativas. **Exige ligar o Identity no painel.**
+- PR #1 — **Migra a autenticação para o Netlify Identity.** Saem `next-auth`,
+  `bcryptjs`, `auth.ts`, `lib/dados/contas.ts` e as rotas `/api/auth/*`; entra
+  `@netlify/identity`. Ganha recuperação de senha e confirmação de email
+  nativas. Conserta de quebra o deploy de produção, que falhava no
+  `npm install` por causa do peer do `next-auth`. Verificado no Deploy
+  Preview: cadastro, confirmação por email, login e `/api/dados` em 200.
 - `36c121d` — Conserta o build quebrado em `/entrar`, a asserção errada
   em `sanitize.test.ts` e o lint em `/devprog`.
 - `132a468` — Auth por email + senha (Auth.js v5 + Credentials + bcrypt).
@@ -139,11 +141,10 @@ Ordem sugerida (a que fizer mais sentido no dia; nenhuma depende da outra):
 - ~~**Confirmação de email no cadastro**~~ — nativa do Identity, controlada
   pela opção `autoconfirm` no painel.
 - **Sobras do esquema de auth antigo nos Blobs** — o store `contas` (email →
-  hash bcrypt) ficou órfão e pode ser apagado. No store `usuarios`, os blobs
-  gravados antes da migração estão chaveados pelos ids do next-auth, que não
-  correspondem a nenhum id do Identity: quem tinha conta antiga volta a ver
-  só o `localStorage` e precisa recadastrar. Se ninguém chegou a usar em
-  produção, é só limpar os dois stores.
+  hash bcrypt) ficou órfão e pode ser apagado. Descoberto ao migrar: o auth
+  com Auth.js **nunca chegou a ir ao ar**, porque todo deploy falhava no
+  install, então não existem contas nem dados reais dessa fase. É só apagar
+  os dois stores quando der vontade — não há ninguém para recadastrar.
 - **Testes E2E de auth** — com o Identity ficou mais fácil que antes (dá para
   criar usuário pela API de admin), mas ainda exige `netlify dev` no CI.
 - **Merge de sync** — o servidor vira fonte da verdade no primeiro login,

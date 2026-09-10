@@ -280,6 +280,20 @@ já que o `.env.local` não é versionado.
 
 ## Estado atual
 
-Todo o escopo funcional inicial está implementado e verificado **em produção**:
-leitura com troca de tradução, busca por referência e por texto, marcação de
-versículos e o ciclo completo dos planos (criar, listar, executar).
+O escopo funcional inicial — leitura com troca de tradução, busca por
+referência e por texto, marcação de versículos e o ciclo completo dos planos —
+está implementado e foi verificado em produção.
+
+O **auth nunca chegou a ir ao ar na versão com Auth.js**: desde que o
+`next-auth` entrou, todo deploy falhava no `npm install` (ver abaixo), então a
+produção ficou parada num build anterior. A versão com Netlify Identity foi
+verificada no Deploy Preview do PR #1: cadastro, email de confirmação, login e
+`GET /api/dados` devolvendo 200 com a sessão válida.
+
+> **Cuidado com peer dependency no Netlify.** O build roda `npm install` puro.
+> Um conflito de peer derruba o deploy mesmo com o `package-lock.json`
+> commitado resolvido — o npm revalida os peers e aborta com `ERESOLVE`. Não
+> adianta resolver só na máquina local com `--legacy-peer-deps`: se o install
+> não passa limpo, não vai ao ar. Foi o que aconteceu com o `next-auth`
+> (peer de `next@^14 || ^15` contra o Next 16 daqui) e o que motivou parte da
+> troca pelo Netlify Identity.
