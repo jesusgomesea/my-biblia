@@ -9,6 +9,8 @@
 Toda a base funcional e a onda inicial de melhorias estão no `main`. Últimos
 commits, do mais novo para o mais antigo:
 
+- (este commit) — Conserta o build quebrado em `/entrar`, a asserção errada
+  em `sanitize.test.ts` e o lint em `/devprog`. Ver abaixo.
 - `132a468` — Auth por email + senha (Auth.js v5 + Credentials + bcrypt).
 - `3250599` — Scaffolding de auth (originalmente Google, depois substituído).
 - `db8f100` — Seletor de livros em `/biblia` no lugar do redirect.
@@ -38,11 +40,16 @@ Estas coisas não estão no git e precisam existir na máquina para o app subir:
 ### 1. Instalar dependências
 
 ```bash
-npm install
+npm install --legacy-peer-deps
 ```
 
 Foram adicionadas nas últimas leva: `next-auth@5.0.0-beta.29`,
 `@netlify/blobs`, `bcryptjs`, `@playwright/test`, `vitest`.
+
+**A flag não é opcional.** O `next-auth@5.0.0-beta.29` ainda declara peer de
+`next@^14 || ^15` e aqui o Next é 16, então o `npm install` puro aborta com
+`ERESOLVE`. Enquanto o beta não atualizar o peer, é `--legacy-peer-deps` em
+toda máquina. O `package-lock.json` já está commitado resolvido assim.
 
 ### 2. `.env.local` na raiz (não vai pro git)
 

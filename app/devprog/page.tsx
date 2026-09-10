@@ -1,7 +1,7 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useEffect, useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import {
   enviar,
   limparMarcadorSincronizacao,
@@ -10,39 +10,77 @@ import {
 import type { Plano } from '@/lib/planos/tipos'
 import type { Marcacao } from '@/lib/marcacoes'
 
+type Espelho<T> = { valor: T; erro: string | null }
+
+/**
+ * O que esta pagina mostra mora no localStorage, um sistema externo: espelhar
+ * isso com efeito + setState renderiza em cascata. `useSyncExternalStore` le
+ * a chave sob demanda e reage aos mesmos eventos.
+ *
+ * O cache pelo texto cru nao e opcional: `JSON.parse` devolveria um objeto
+ * novo a cada leitura e o React, que compara por identidade, renderizaria sem
+ * parar. Enquanto o cru nao muda, devolvemos o mesmo objeto.
+ */
+function criarEspelho<T>(chave: string, vazio: T) {
+  let cruAnterior: string | null | undefined
+  let atual: Espelho<T> = { valor: vazio, erro: null }
+
+  return function ler(): Espelho<T> {
+    const cru = window.localStorage.getItem(chave)
+    if (cru === cruAnterior) return atual
+    cruAnterior = cru
+
+    try {
+      atual = { valor: cru ? (JSON.parse(cru) as T) : vazio, erro: null }
+    } catch (erro) {
+      atual = { valor: vazio, erro: (erro as Error).message }
+    }
+    return atual
+  }
+}
+
+function criarAssinatura(evento: string) {
+  return (aoMudar: () => void) => {
+    window.addEventListener(evento, aoMudar)
+    return () => window.removeEventListener(evento, aoMudar)
+  }
+}
+
+const lerPlanos = criarEspelho<Plano[]>('my-biblia:planos', [])
+const lerMarcacoes = criarEspelho<Record<string, Marcacao>>(
+  'my-biblia:marcacoes',
+  {},
+)
+
+const assinarPlanos = criarAssinatura('planos-alterados')
+const assinarMarcacoes = criarAssinatura('marcacoes-alteradas')
+
+// No servidor nao ha localStorage. Os dois precisam ser constantes: o React
+// exige a mesma referencia a cada chamada.
+const PLANOS_NO_SERVIDOR: Espelho<Plano[]> = { valor: [], erro: null }
+const MARCACOES_NO_SERVIDOR: Espelho<Record<string, Marcacao>> = {
+  valor: {},
+  erro: null,
+}
+
 /**
  * Pagina de bastidores para inspecionar e mexer no estado do app durante o
  * desenvolvimento. Nao esta linkada no menu; entra-se por URL direta.
  */
 export default function DevProg() {
   const { data: sessao, status } = useSession()
-  const [planos, setPlanos] = useState<Plano[]>([])
-  const [marcacoes, setMarcacoes] = useState<Record<string, Marcacao>>({})
   const [saida, setSaida] = useState<string>('')
 
-  function recarregar() {
-    try {
-      setPlanos(
-        JSON.parse(window.localStorage.getItem('my-biblia:planos') ?? '[]'),
-      )
-      setMarcacoes(
-        JSON.parse(window.localStorage.getItem('my-biblia:marcacoes') ?? '{}'),
-      )
-    } catch (erro) {
-      setSaida(`Falha ao ler localStorage: ${(erro as Error).message}`)
-    }
-  }
-
-  useEffect(() => {
-    recarregar()
-    const aoMudar = () => recarregar()
-    window.addEventListener('planos-alterados', aoMudar)
-    window.addEventListener('marcacoes-alteradas', aoMudar)
-    return () => {
-      window.removeEventListener('planos-alterados', aoMudar)
-      window.removeEventListener('marcacoes-alteradas', aoMudar)
-    }
-  }, [])
+  const { valor: planos, erro: erroPlanos } = useSyncExternalStore(
+    assinarPlanos,
+    lerPlanos,
+    () => PLANOS_NO_SERVIDOR,
+  )
+  const { valor: marcacoes, erro: erroMarcacoes } = useSyncExternalStore(
+    assinarMarcacoes,
+    lerMarcacoes,
+    () => MARCACOES_NO_SERVIDOR,
+  )
 
   function anotar(rotulo: string, valor: unknown) {
     const stamp = new Date().toISOString().slice(11, 19)
@@ -180,6 +218,7 @@ export default function DevProg() {
       </Secao>
 
       <Secao titulo={`Planos (${planos.length})`}>
+        <ErroLeitura chave="my-biblia:planos" mensagem={erroPlanos} />
         <pre className="max-h-64 overflow-auto rounded-md bg-accent-soft/40 p-3 text-xs">
           {JSON.stringify(planos, null, 2)}
         </pre>
@@ -192,6 +231,7 @@ export default function DevProg() {
       </Secao>
 
       <Secao titulo={`Marcacoes (${Object.keys(marcacoes).length})`}>
+        <ErroLeitura chave="my-biblia:marcacoes" mensagem={erroMarcacoes} />
         <pre className="max-h-64 overflow-auto rounded-md bg-accent-soft/40 p-3 text-xs">
           {JSON.stringify(marcacoes, null, 2)}
         </pre>
@@ -261,6 +301,21 @@ function Secao({
       <h2 className="mb-3 font-serif text-lg font-semibold">{titulo}</h2>
       {children}
     </section>
+  )
+}
+
+function ErroLeitura({
+  chave,
+  mensagem,
+}: {
+  chave: string
+  mensagem: string | null
+}) {
+  if (!mensagem) return null
+  return (
+    <p role="alert" className="mb-3 text-xs text-red-400">
+      JSON invalido em <code>{chave}</code>: {mensagem}. Mostrando vazio.
+    </p>
   )
 }
 

@@ -3,11 +3,25 @@
 import { signIn, useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 
 type Modo = 'entrar' | 'cadastrar'
 
+/**
+ * `useSearchParams` só resolve no cliente, então quem o chama precisa estar
+ * sob um limite de Suspense — sem ele o prerender desta página quebra o build.
+ * Daí a casca: o formulário inteiro fica dentro, e o esqueleto é o que sai no
+ * HTML estático.
+ */
 export default function Entrar() {
+  return (
+    <Suspense fallback={<EsqueletoEntrar />}>
+      <FormularioEntrar />
+    </Suspense>
+  )
+}
+
+function FormularioEntrar() {
   const { status } = useSession()
   const params = useSearchParams()
   const paraOnde = params.get('callbackUrl') ?? '/'
@@ -166,6 +180,31 @@ export default function Entrar() {
       >
         ← Voltar
       </Link>
+    </div>
+  )
+}
+
+function EsqueletoEntrar() {
+  return (
+    <div className="mx-auto max-w-md px-6 py-14" aria-busy="true">
+      <div className="h-9 w-40 animate-pulse rounded-md bg-accent-soft/60" />
+
+      <div className="mt-4 space-y-2">
+        <div className="h-4 w-full animate-pulse rounded bg-accent-soft/40" />
+        <div className="h-4 w-4/5 animate-pulse rounded bg-accent-soft/40" />
+      </div>
+
+      <div className="mt-6 h-11 w-full animate-pulse rounded-md bg-accent-soft/40" />
+
+      <div className="mt-6 space-y-4">
+        {['Email', 'Senha'].map((campo) => (
+          <div key={campo}>
+            <div className="h-4 w-16 animate-pulse rounded bg-accent-soft/40" />
+            <div className="mt-1 h-10 w-full animate-pulse rounded-md bg-accent-soft/40" />
+          </div>
+        ))}
+        <div className="h-11 w-full animate-pulse rounded-md bg-accent-soft/60" />
+      </div>
     </div>
   )
 }

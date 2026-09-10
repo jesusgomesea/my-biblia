@@ -22,10 +22,9 @@ describe('sanitizeVerseHtml', () => {
 
   it('escapa handlers inline em tags desconhecidas', () => {
     const cru = '<img src=x onerror=alert(1)>'
-    const saida = sanitizeVerseHtml(cru)
-    expect(saida).not.toContain('<img')
-    expect(saida).not.toContain('onerror')
-    expect(saida).toContain('&lt;img')
+    // A palavra `onerror` sobrevive como texto escapado, e não há problema
+    // nisso: o que a tornaria executável é a tag, e é a tag que some.
+    expect(sanitizeVerseHtml(cru)).toBe('&lt;img src=x onerror=alert(1)&gt;')
   })
 
   it('escapa <iframe> mesmo aninhado', () => {
