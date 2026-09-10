@@ -1,7 +1,7 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
 import { useState, useSyncExternalStore } from 'react'
+import { useSessao } from '@/components/provedor-sessao'
 import {
   enviar,
   limparMarcadorSincronizacao,
@@ -68,7 +68,7 @@ const MARCACOES_NO_SERVIDOR: Espelho<Record<string, Marcacao>> = {
  * desenvolvimento. Nao esta linkada no menu; entra-se por URL direta.
  */
 export default function DevProg() {
-  const { data: sessao, status } = useSession()
+  const { usuario, carregando } = useSessao()
   const [saida, setSaida] = useState<string>('')
 
   const { valor: planos, erro: erroPlanos } = useSyncExternalStore(
@@ -170,13 +170,13 @@ export default function DevProg() {
   }
 
   async function forcarSincInicial() {
-    if (!sessao?.user?.id) {
+    if (!usuario) {
       anotar('sincronizarInicial', 'nao ha sessao')
       return
     }
     limparMarcadorSincronizacao()
     try {
-      await sincronizarInicial(sessao.user.id)
+      await sincronizarInicial(usuario.id)
       anotar('sincronizarInicial', 'ok')
     } catch (erro) {
       anotar('sincronizarInicial', (erro as Error).message)
@@ -207,13 +207,13 @@ export default function DevProg() {
       <Secao titulo="Sessao">
         <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
           <dt className="text-muted">status</dt>
-          <dd>{status}</dd>
+          <dd>{carregando ? 'carregando' : usuario ? 'autenticado' : 'sem sessao'}</dd>
           <dt className="text-muted">id</dt>
           <dd className="truncate font-mono text-xs">
-            {sessao?.user?.id ?? '—'}
+            {usuario?.id ?? '—'}
           </dd>
           <dt className="text-muted">email</dt>
-          <dd>{sessao?.user?.email ?? '—'}</dd>
+          <dd>{usuario?.email ?? '—'}</dd>
         </dl>
       </Secao>
 
@@ -256,8 +256,8 @@ export default function DevProg() {
 
       <Secao titulo="Pings">
         <div className="flex flex-wrap gap-2">
-          <Botao onClick={() => pingar('/api/auth/session')}>
-            /api/auth/session
+          <Botao onClick={() => pingar('/.netlify/identity/settings')}>
+            /.netlify/identity/settings
           </Botao>
           <Botao onClick={() => pingar('/manifest.webmanifest')}>
             /manifest.webmanifest

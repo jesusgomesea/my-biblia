@@ -1,10 +1,12 @@
-# Este arquivo existe para limitar a taxa de rotas públicas que consomem
-# recursos pagos ou de storage — geração de plano (cota Gemini) e cadastro
-# (Netlify Blobs / bots). O restante da configuração do Next.js continua
-# por conta do Netlify — não acrescente build command, publish directory
-# nem versão do adaptador aqui.
+# Este arquivo existe para limitar a taxa da rota publica que consome recurso
+# pago: a geracao de plano, que gasta cota do Gemini. O restante da
+# configuracao do Next.js continua por conta do Netlify — nao acrescente build
+# command, publish directory nem versao do adaptador aqui.
 #
-# O plano gratuito permite duas regras deste tipo por projeto.
+# O cadastro nao aparece mais aqui: com o Netlify Identity ele deixou de ser
+# uma rota nossa (vai direto para /.netlify/identity) e o proprio Identity
+# cuida do abuso. Isso liberou um dos dois slots de rate limit do plano
+# gratuito, que continua permitindo duas regras por projeto.
 [[redirects]]
   from = "/api/planos/gerar"
   to = "/api/planos/gerar"
@@ -13,16 +15,5 @@
 
   [redirects.rate_limit]
     window_limit = 10
-    window_size = 60
-    aggregate_by = ["ip", "domain"]
-
-[[redirects]]
-  from = "/api/auth/cadastro"
-  to = "/api/auth/cadastro"
-  status = 200
-  force = true
-
-  [redirects.rate_limit]
-    window_limit = 5
     window_size = 60
     aggregate_by = ["ip", "domain"]

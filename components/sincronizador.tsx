@@ -1,7 +1,7 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
 import { useEffect } from 'react'
+import { useSessao } from '@/components/provedor-sessao'
 import {
   limparMarcadorSincronizacao,
   sincronizarInicial,
@@ -13,17 +13,20 @@ import {
  * deslogar, esquece o marcador para que o próximo login refaça a sincronia.
  */
 export default function Sincronizador() {
-  const { data: sessao, status } = useSession()
+  const { usuario, carregando } = useSessao()
+  const id = usuario?.id
 
   useEffect(() => {
-    if (status === 'authenticated' && sessao?.user?.id) {
-      sincronizarInicial(sessao.user.id).catch((erro) => {
+    if (carregando) return
+
+    if (id) {
+      sincronizarInicial(id).catch((erro) => {
         console.warn('Falha na sincronização inicial:', erro)
       })
-    } else if (status === 'unauthenticated') {
+    } else {
       limparMarcadorSincronizacao()
     }
-  }, [status, sessao?.user?.id])
+  }, [carregando, id])
 
   return null
 }

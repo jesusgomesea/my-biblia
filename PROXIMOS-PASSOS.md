@@ -9,8 +9,14 @@
 Toda a base funcional e a onda inicial de melhorias estão no `main`. Últimos
 commits, do mais novo para o mais antigo:
 
-- (este commit) — Conserta o build quebrado em `/entrar`, a asserção errada
-  em `sanitize.test.ts` e o lint em `/devprog`. Ver abaixo.
+- PR #1 — **Migra a autenticação para o Netlify Identity.** Saem `next-auth`,
+  `bcryptjs`, `auth.ts`, `lib/dados/contas.ts` e as rotas `/api/auth/*`; entra
+  `@netlify/identity`. Ganha recuperação de senha e confirmação de email
+  nativas. Conserta de quebra o deploy de produção, que falhava no
+  `npm install` por causa do peer do `next-auth`. Verificado no Deploy
+  Preview: cadastro, confirmação por email, login e `/api/dados` em 200.
+- `36c121d` — Conserta o build quebrado em `/entrar`, a asserção errada
+  em `sanitize.test.ts` e o lint em `/devprog`.
 - `132a468` — Auth por email + senha (Auth.js v5 + Credentials + bcrypt).
 - `3250599` — Scaffolding de auth (originalmente Google, depois substituído).
 - `db8f100` — Seletor de livros em `/biblia` no lugar do redirect.
@@ -40,37 +46,39 @@ Estas coisas não estão no git e precisam existir na máquina para o app subir:
 ### 1. Instalar dependências
 
 ```bash
-npm install --legacy-peer-deps
+npm install
 ```
 
-Foram adicionadas nas últimas leva: `next-auth@5.0.0-beta.29`,
-`@netlify/blobs`, `bcryptjs`, `@playwright/test`, `vitest`.
+Em uso: `@netlify/identity`, `@netlify/blobs`, `@google/genai`,
+`@playwright/test`, `vitest`.
 
-**A flag não é opcional.** O `next-auth@5.0.0-beta.29` ainda declara peer de
-`next@^14 || ^15` e aqui o Next é 16, então o `npm install` puro aborta com
-`ERESOLVE`. Enquanto o beta não atualizar o peer, é `--legacy-peer-deps` em
-toda máquina. O `package-lock.json` já está commitado resolvido assim.
+> O `--legacy-peer-deps` **não é mais necessário**. Ele existia porque o
+> `next-auth@5.0.0-beta.29` declarava peer de `next@^14 || ^15` contra o Next
+> 16 daqui. Com a migração para o Netlify Identity o `next-auth` saiu do
+> projeto e o `npm install` puro voltou a funcionar.
 
 ### 2. `.env.local` na raiz (não vai pro git)
 
 ```
 GEMINI_API_KEY=<a chave do Gemini que já era usada>
-AUTH_SECRET=<32 bytes base64; gera com o comando abaixo>
 ```
 
-Gerando o `AUTH_SECRET`:
+Só isso. O Netlify Identity **não usa variável de ambiente**: o endpoint vem
+do runtime do Netlify. O antigo `AUTH_SECRET` era do next-auth e não existe
+mais — pode apagar das duas máquinas e do painel.
 
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
-```
+### 3. Ligar o Netlify Identity no painel (uma vez por projeto)
 
-**Use o MESMO `AUTH_SECRET` nas duas máquinas.** Trocar invalida os cookies
-de sessão emitidos pela outra.
+Site configuration → Identity → **Enable Identity**. Sem isso o login não
+funciona nem local nem em produção: `getUser()` devolve `null` e o cadastro
+lança `MissingIdentityError`. O app continua abrindo e funcionando pelo
+`localStorage`, só não deixa entrar.
 
-### 3. `AUTH_SECRET` no painel do Netlify
+Vale conferir, ainda em Identity:
 
-Site settings → Environment variables → `AUTH_SECRET` com o mesmo valor.
-Depois disparar um redeploy.
+- **Registration**: `Open` (qualquer um cria conta) ou `Invite only`.
+- **Emails**: os modelos de confirmação e de recuperação são editáveis; os
+  padrões vêm em inglês.
 
 ### 4. Netlify CLI para dev local com Blobs
 
@@ -125,18 +133,23 @@ Ordem sugerida (a que fizer mais sentido no dia; nenhuma depende da outra):
 
 ## Débitos técnicos anotados no caminho
 
-- **Rate limit em `/api/auth`** (login) — o `netlify.toml` free só permite
-  duas regras; ambas ocupadas (`gerar` e `cadastro`). Se virar problema,
-  migrar para um plano pago do Netlify ou implementar limiter em código.
-- **Recuperação de senha** — hoje esqueceu, perdeu. Precisa serviço de
-  email (Resend/SendGrid) para link de reset.
-- **Confirmação de email no cadastro** — hoje não pede. Pode virar problema
-  de bots com email inválido.
+- ~~**Rate limit em `/api/auth`**~~ — resolvido pela migração: o cadastro
+  deixou de ser rota nossa, o `netlify.toml` voltou a ter só uma regra
+  (`gerar`) e sobrou um slot dos dois do plano gratuito.
+- ~~**Recuperação de senha**~~ — nativa do Identity, sem serviço de email
+  próprio. Telas em `/recuperar-senha` e `/nova-senha`.
+- ~~**Confirmação de email no cadastro**~~ — nativa do Identity, controlada
+  pela opção `autoconfirm` no painel.
+- **Sobras do esquema de auth antigo nos Blobs** — o store `contas` (email →
+  hash bcrypt) ficou órfão e pode ser apagado. Descoberto ao migrar: o auth
+  com Auth.js **nunca chegou a ir ao ar**, porque todo deploy falhava no
+  install, então não existem contas nem dados reais dessa fase. É só apagar
+  os dois stores quando der vontade — não há ninguém para recadastrar.
+- **Testes E2E de auth** — com o Identity ficou mais fácil que antes (dá para
+  criar usuário pela API de admin), mas ainda exige `netlify dev` no CI.
 - **Merge de sync** — o servidor vira fonte da verdade no primeiro login,
   sem merge fino. Se editar em dois navegadores off-line, o último a
   sincronizar sobrescreve o outro.
-- **Testes E2E de auth** — precisa mockar Credentials e/ou rodar Blobs
-  local. Fica para uma tarde inteira.
 - **Curadoria do catálogo de traduções** — Bolls.life serve tanto domínio
   público quanto material protegido (`NVIPT`, `NVT`, `NAA`, `MENS`). Servir
   o catálogo todo tem risco de licenciamento. Ver CLAUDE.md.

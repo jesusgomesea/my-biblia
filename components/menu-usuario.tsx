@@ -1,18 +1,19 @@
 'use client'
 
+import { logout } from '@netlify/identity'
 import Link from 'next/link'
-import { signOut, useSession } from 'next-auth/react'
 import { useState } from 'react'
+import { useSessao } from '@/components/provedor-sessao'
 
 export default function MenuUsuario() {
-  const { data: sessao, status } = useSession()
+  const { usuario, carregando } = useSessao()
   const [aberto, setAberto] = useState(false)
 
-  if (status === 'loading') {
+  if (carregando) {
     return <div className="h-8 w-16 animate-pulse rounded-md bg-accent-soft/60" />
   }
 
-  if (status !== 'authenticated' || !sessao?.user) {
+  if (!usuario) {
     return (
       <Link
         href="/entrar"
@@ -23,9 +24,22 @@ export default function MenuUsuario() {
     )
   }
 
-  const email = sessao.user.email ?? 'Você'
+  const email = usuario.email ?? 'Você'
   const inicial = email.slice(0, 1).toUpperCase()
   const rotulo = email.split('@')[0]
+
+  async function sair() {
+    try {
+      await logout()
+    } finally {
+      // Recarrega a pagina inteira: o cookie nf_jwt so some do lado do
+      // servidor na proxima requisicao completa.
+      // Navegacao completa e obrigatoria aqui: router.push() faz navegacao
+      // suave e o cookie de sessao recem-escrito nao chegaria ao servidor.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      window.location.href = '/'
+    }
+  }
 
   return (
     <div className="relative">
@@ -48,13 +62,11 @@ export default function MenuUsuario() {
           className="absolute right-0 mt-2 w-56 rounded-lg border border-borda bg-surface p-2 shadow-md"
           onMouseLeave={() => setAberto(false)}
         >
-          <p className="truncate px-2 py-1 text-xs text-muted">
-            {sessao.user.email}
-          </p>
+          <p className="truncate px-2 py-1 text-xs text-muted">{usuario.email}</p>
           <button
             type="button"
             role="menuitem"
-            onClick={() => signOut()}
+            onClick={() => void sair()}
             className="w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent-soft"
           >
             Sair
