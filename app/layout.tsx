@@ -42,11 +42,37 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ProvedorSessao>
           <Sincronizador />
           <header className="border-b border-borda">
-            <nav className="mx-auto flex max-w-5xl items-center gap-6 px-4 py-3">
-              <Link href="/" className="font-serif text-lg font-semibold">
-                my<span className="text-accent">·</span>biblia
-              </Link>
-              <div className="flex flex-1 gap-4 text-sm text-muted">
+            <div className="mx-auto max-w-5xl px-4 py-3">
+              <div className="flex items-center justify-between gap-4">
+                <Link href="/" className="font-serif text-lg font-semibold">
+                  my<span className="text-accent">·</span>biblia
+                </Link>
+                {/* Menu em linha no desktop, junto do logo. */}
+                <nav
+                  aria-label="Principal"
+                  className="hidden flex-1 gap-4 pl-2 text-sm text-muted md:flex"
+                >
+                  <Link href="/biblia" className="hover:text-foreground">
+                    Bíblia
+                  </Link>
+                  <Link href="/planos" className="hover:text-foreground">
+                    Planos
+                  </Link>
+                  <Link href="/marcacoes" className="hover:text-foreground">
+                    Marcados
+                  </Link>
+                  <Link href="/busca" className="hover:text-foreground">
+                    Buscar
+                  </Link>
+                </nav>
+                <MenuUsuario />
+              </div>
+              {/* No mobile, o menu desce para uma segunda linha; scroll
+                  horizontal cobre casos extremos, mas os quatro cabem em ~350px. */}
+              <nav
+                aria-label="Principal"
+                className="-mx-4 mt-2 flex gap-5 overflow-x-auto px-4 text-sm text-muted md:hidden"
+              >
                 <Link href="/biblia" className="hover:text-foreground">
                   Bíblia
                 </Link>
@@ -59,9 +85,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 <Link href="/busca" className="hover:text-foreground">
                   Buscar
                 </Link>
-              </div>
-              <MenuUsuario />
-            </nav>
+              </nav>
+            </div>
           </header>
           <main className="flex-1">{children}</main>
         </ProvedorSessao>
