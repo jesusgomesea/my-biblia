@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { livroPorId, stripHtml, type Verse } from '@/lib/bible'
 import {
   alternarMarcacao,
+  buscarMarcacao,
   chaveDaMarcacao,
-  chavesMarcadas,
   observarMarcacoes,
+  salvarAnotacao,
+  type Marcacao,
 } from '@/lib/marcacoes'
 
 export default function ListaVersiculos({
@@ -20,18 +22,27 @@ export default function ListaVersiculos({
   livro: number
   capitulo: number
 }) {
-  const [marcadas, setMarcadas] = useState<Set<string>>(new Set())
+  const [marcacoesDoCapitulo, setMarcacoesDoCapitulo] = useState<
+    Record<number, Marcacao | undefined>
+  >({})
   /** Numero do versiculo copiado por ultimo — vira ✓ por um instante. */
   const [copiado, setCopiado] = useState<number | null>(null)
   const [podeCompartilhar, setPodeCompartilhar] = useState(false)
+  /** Numero do versiculo com o editor de anotacao aberto. */
+  const [anotando, setAnotando] = useState<number | null>(null)
 
   useEffect(() => {
-    const atualizar = () => setMarcadas(chavesMarcadas())
+    const atualizar = () => {
+      const mapa: Record<number, Marcacao | undefined> = {}
+      for (const v of versiculos) {
+        mapa[v.number] = buscarMarcacao(livro, capitulo, v.number)
+      }
+      setMarcacoesDoCapitulo(mapa)
+    }
     atualizar()
     return observarMarcacoes(atualizar)
-  }, [])
+  }, [livro, capitulo, versiculos])
 
-  // navigator.share existe em iOS Safari e Android; se nao tiver, escondemos.
   useEffect(() => {
     setPodeCompartilhar(typeof navigator !== 'undefined' && 'share' in navigator)
   }, [])
@@ -70,9 +81,7 @@ export default function ListaVersiculos({
     try {
       await navigator.share({ title: referencia, text: texto, url })
     } catch (erro) {
-      // Cancelamento pelo usuario e um AbortError esperado — nao logamos.
       if ((erro as Error).name !== 'AbortError') {
-        // Fallback para copiar quando o Share falha por outro motivo.
         copiar(versiculo)
       }
     }
@@ -81,15 +90,15 @@ export default function ListaVersiculos({
   return (
     <article className="leitura-texto mt-6 space-y-2 font-serif">
       {versiculos.map((versiculo) => {
-        const marcado = marcadas.has(
-          chaveDaMarcacao(livro, capitulo, versiculo.number),
-        )
+        const marcacao = marcacoesDoCapitulo[versiculo.number]
+        const marcado = !!marcacao
         const foiCopiado = copiado === versiculo.number
+        const editando = anotando === versiculo.number
         return (
           <p
             key={versiculo.number}
             id={`v${versiculo.number}`}
-            className={`group flex scroll-mt-6 items-start gap-3 rounded-md px-2 py-1 transition-colors target:bg-accent-soft ${
+            className={`group flex scroll-mt-6 flex-wrap items-start gap-x-3 gap-y-2 rounded-md px-2 py-1 transition-colors target:bg-accent-soft ${
               marcado ? 'bg-accent-soft' : ''
             }`}
           >
@@ -120,6 +129,18 @@ export default function ListaVersiculos({
             />
 
             <div className="flex shrink-0 self-start gap-0.5">
+              <BotaoIcone
+                onClick={() =>
+                  setAnotando((atual) =>
+                    atual === versiculo.number ? null : versiculo.number,
+                  )
+                }
+                aria-label={`Anotar ${nomeDoLivro} ${capitulo}:${versiculo.number}`}
+                title={marcacao?.anotacao ? 'Editar anotação' : 'Anotar'}
+                destacado={!!marcacao?.anotacao || editando}
+              >
+                <IconeNota preenchido={!!marcacao?.anotacao} />
+              </BotaoIcone>
               {podeCompartilhar && (
                 <BotaoIcone
                   onClick={() => compartilhar(versiculo)}
@@ -138,10 +159,89 @@ export default function ListaVersiculos({
                 {foiCopiado ? <IconeCheck /> : <IconeCopiar />}
               </BotaoIcone>
             </div>
+
+            {marcacao?.anotacao && !editando && (
+              <p className="mt-1 basis-full pl-10 font-sans text-sm italic text-muted">
+                “{marcacao.anotacao}”
+              </p>
+            )}
+
+            {editando && (
+              <EditorAnotacao
+                inicial={marcacao?.anotacao ?? ''}
+                onCancelar={() => setAnotando(null)}
+                onSalvar={(texto) => {
+                  salvarAnotacao(
+                    {
+                      livro,
+                      capitulo,
+                      versiculo: versiculo.number,
+                      traducao,
+                      html: versiculo.html,
+                    },
+                    texto,
+                  )
+                  setAnotando(null)
+                }}
+              />
+            )}
           </p>
         )
       })}
     </article>
+  )
+}
+
+function EditorAnotacao({
+  inicial,
+  onSalvar,
+  onCancelar,
+}: {
+  inicial: string
+  onSalvar: (texto: string) => void
+  onCancelar: () => void
+}) {
+  const [texto, setTexto] = useState(inicial)
+  const areaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    areaRef.current?.focus()
+    areaRef.current?.setSelectionRange(texto.length, texto.length)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  return (
+    <div className="mt-2 basis-full pl-10 font-sans">
+      <textarea
+        ref={areaRef}
+        value={texto}
+        onChange={(e) => setTexto(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') onCancelar()
+          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) onSalvar(texto)
+        }}
+        placeholder="Sua anotação sobre este versículo…"
+        rows={3}
+        maxLength={2000}
+        className="w-full rounded-md border border-borda bg-surface p-2 text-sm focus:border-accent focus:outline-none"
+      />
+      <div className="mt-2 flex justify-end gap-2 text-sm">
+        <button
+          type="button"
+          onClick={onCancelar}
+          className="rounded-md px-3 py-1 text-muted hover:text-foreground"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          onClick={() => onSalvar(texto)}
+          className="rounded-md bg-accent px-3 py-1 font-medium text-background"
+        >
+          Salvar
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -250,6 +350,25 @@ function IconeCompartilhar() {
       <circle cx="18" cy="19" r="3" />
       <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
       <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+    </svg>
+  )
+}
+
+function IconeNota({ preenchido }: { preenchido: boolean }) {
+  return (
+    <svg
+      aria-hidden
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill={preenchido ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
     </svg>
   )
 }

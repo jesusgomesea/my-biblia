@@ -58,6 +58,11 @@ export default function Marcacoes() {
                 className="mt-2 font-serif text-base/7"
                 dangerouslySetInnerHTML={{ __html: marcacao.html }}
               />
+              {marcacao.anotacao && (
+                <p className="mt-3 rounded-md bg-accent-soft/40 p-3 text-sm italic">
+                  “{marcacao.anotacao}”
+                </p>
+              )}
               <p className="mt-2 text-xs text-muted">{marcacao.traducao}</p>
             </li>
           ))}

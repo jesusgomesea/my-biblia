@@ -10,6 +10,9 @@ export type Marcacao = {
   traducao: string
   html: string
   marcadoEm: string
+  /** Anotação pessoal, opcional. Marcações antigas nunca tiveram nota. */
+  anotacao?: string
+  anotadoEm?: string
 }
 
 const CHAVE = 'my-biblia:marcacoes'
@@ -70,4 +73,48 @@ export function alternarMarcacao(marcacao: Marcacao): void {
 export function observarMarcacoes(aoMudar: () => void): () => void {
   window.addEventListener(EVENTO, aoMudar)
   return () => window.removeEventListener(EVENTO, aoMudar)
+}
+
+export function buscarMarcacao(
+  livro: number,
+  capitulo: number,
+  versiculo: number,
+): Marcacao | undefined {
+  return ler()[chaveDaMarcacao(livro, capitulo, versiculo)]
+}
+
+/**
+ * Grava a anotação. Se a marcação ainda não existe, cria uma (o texto precisa
+ * vir do chamador — a nota não faz sentido sem a captura do versículo).
+ * Nota vazia limpa `anotacao` e `anotadoEm`, preservando a marcação.
+ */
+export function salvarAnotacao(
+  base: Omit<Marcacao, 'marcadoEm' | 'anotacao' | 'anotadoEm'>,
+  anotacao: string,
+): void {
+  const marcacoes = ler()
+  const chave = chaveDaMarcacao(base.livro, base.capitulo, base.versiculo)
+  const existente = marcacoes[chave]
+  const texto = anotacao.trim()
+  const agora = new Date().toISOString()
+
+  if (existente) {
+    if (texto) {
+      marcacoes[chave] = { ...existente, anotacao: texto, anotadoEm: agora }
+    } else {
+      const { anotacao: _a, anotadoEm: _q, ...resto } = existente
+      marcacoes[chave] = resto
+    }
+  } else if (texto) {
+    // Anotação em versículo ainda não marcado — marca automaticamente.
+    marcacoes[chave] = {
+      ...base,
+      marcadoEm: agora,
+      anotacao: texto,
+      anotadoEm: agora,
+    }
+  } else {
+    return // Nota vazia num versículo não marcado: no-op.
+  }
+  escrever(marcacoes)
 }
