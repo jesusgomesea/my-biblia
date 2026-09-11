@@ -8,6 +8,13 @@
   --border: #e6e1d8;
   --accent: #7a5c34;
   --accent-soft: #f0e7d8;
+
+  /* Cores de marcacao. Suaves o bastante para o texto passar por cima. */
+  --marca-amarelo: #f7ecc9;
+  --marca-rosa: #f7d5d9;
+  --marca-azul: #d5e2f2;
+  --marca-verde: #d8ecd0;
+  --marca-roxo: #e2d5f2;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,6 +26,12 @@
     --border: #2e2b25;
     --accent: #d3ab72;
     --accent-soft: #2b241a;
+
+    --marca-amarelo: #3a2f1a;
+    --marca-rosa: #3a2028;
+    --marca-azul: #1e2c3a;
+    --marca-verde: #1f3325;
+    --marca-roxo: #2a1f3a;
   }
 }
 

@@ -6,10 +6,14 @@ import {
   alternarMarcacao,
   buscarMarcacao,
   chaveDaMarcacao,
+  CORES,
+  COR_PADRAO,
   observarMarcacoes,
   salvarAnotacao,
+  trocarCor,
   type Marcacao,
 } from '@/lib/marcacoes'
+import { corDeMarcacao, ROTULO_DA_COR } from '@/lib/cores-marcacao'
 
 export default function ListaVersiculos({
   versiculos,
@@ -30,6 +34,8 @@ export default function ListaVersiculos({
   const [podeCompartilhar, setPodeCompartilhar] = useState(false)
   /** Numero do versiculo com o editor de anotacao aberto. */
   const [anotando, setAnotando] = useState<number | null>(null)
+  /** Numero do versiculo com a palette aberta. */
+  const [escolhendoCor, setEscolhendoCor] = useState<number | null>(null)
 
   useEffect(() => {
     const atualizar = () => {
@@ -98,9 +104,12 @@ export default function ListaVersiculos({
           <p
             key={versiculo.number}
             id={`v${versiculo.number}`}
-            className={`group flex scroll-mt-6 flex-wrap items-start gap-x-3 gap-y-2 rounded-md px-2 py-1 transition-colors target:bg-accent-soft ${
-              marcado ? 'bg-accent-soft' : ''
-            }`}
+            style={
+              marcado
+                ? { backgroundColor: corDeMarcacao(marcacao?.cor ?? COR_PADRAO) }
+                : undefined
+            }
+            className="group flex scroll-mt-6 flex-wrap items-start gap-x-3 gap-y-2 rounded-md px-2 py-1 transition-colors target:bg-accent-soft"
           >
             <button
               type="button"
@@ -128,7 +137,51 @@ export default function ListaVersiculos({
               dangerouslySetInnerHTML={{ __html: versiculo.html }}
             />
 
-            <div className="flex shrink-0 self-start gap-0.5">
+            <div className="relative flex shrink-0 self-start gap-0.5">
+              {marcado && (
+                <BotaoIcone
+                  onClick={() =>
+                    setEscolhendoCor((atual) =>
+                      atual === versiculo.number ? null : versiculo.number,
+                    )
+                  }
+                  aria-label={`Cor da marcação em ${nomeDoLivro} ${capitulo}:${versiculo.number}`}
+                  title="Cor da marcação"
+                  destacado
+                >
+                  <span
+                    aria-hidden
+                    className="block size-4 rounded-full border border-borda"
+                    style={{
+                      backgroundColor: corDeMarcacao(marcacao?.cor ?? COR_PADRAO),
+                    }}
+                  />
+                </BotaoIcone>
+              )}
+              {escolhendoCor === versiculo.number && (
+                <div
+                  role="menu"
+                  aria-label="Escolher cor"
+                  className="absolute right-0 top-full z-10 mt-1 flex gap-1 rounded-md border border-borda bg-surface p-1.5 shadow-md"
+                  onMouseLeave={() => setEscolhendoCor(null)}
+                >
+                  {CORES.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={(marcacao?.cor ?? COR_PADRAO) === c}
+                      aria-label={ROTULO_DA_COR[c]}
+                      onClick={() => {
+                        trocarCor(livro, capitulo, versiculo.number, c)
+                        setEscolhendoCor(null)
+                      }}
+                      className="size-6 rounded-full border border-borda transition-transform hover:scale-110"
+                      style={{ backgroundColor: corDeMarcacao(c) }}
+                    />
+                  ))}
+                </div>
+              )}
               <BotaoIcone
                 onClick={() =>
                   setAnotando((atual) =>

@@ -2,6 +2,10 @@
 
 import { sincronizarDepois } from '@/lib/dados/nuvem'
 
+export const CORES = ['amarelo', 'rosa', 'azul', 'verde', 'roxo'] as const
+export type CorMarcacao = (typeof CORES)[number]
+export const COR_PADRAO: CorMarcacao = 'amarelo'
+
 export type Marcacao = {
   livro: number
   capitulo: number
@@ -13,6 +17,8 @@ export type Marcacao = {
   /** Anotação pessoal, opcional. Marcações antigas nunca tiveram nota. */
   anotacao?: string
   anotadoEm?: string
+  /** Cor do destaque. Marcações antigas nunca tiveram cor — tratamos como amarelo. */
+  cor?: CorMarcacao
 }
 
 const CHAVE = 'my-biblia:marcacoes'
@@ -81,6 +87,20 @@ export function buscarMarcacao(
   versiculo: number,
 ): Marcacao | undefined {
   return ler()[chaveDaMarcacao(livro, capitulo, versiculo)]
+}
+
+export function trocarCor(
+  livro: number,
+  capitulo: number,
+  versiculo: number,
+  cor: CorMarcacao,
+): void {
+  const marcacoes = ler()
+  const chave = chaveDaMarcacao(livro, capitulo, versiculo)
+  const existente = marcacoes[chave]
+  if (!existente) return
+  marcacoes[chave] = { ...existente, cor }
+  escrever(marcacoes)
 }
 
 /**

@@ -5,10 +5,12 @@ import { useEffect, useState } from 'react'
 import { livroPorId } from '@/lib/bible'
 import {
   alternarMarcacao,
+  COR_PADRAO,
   listarMarcacoes,
   observarMarcacoes,
   type Marcacao,
 } from '@/lib/marcacoes'
+import { corDeMarcacao } from '@/lib/cores-marcacao'
 
 export default function Marcacoes() {
   const [marcacoes, setMarcacoes] = useState<Marcacao[] | null>(null)
@@ -35,7 +37,10 @@ export default function Marcacoes() {
           {marcacoes.map((marcacao) => (
             <li
               key={`${marcacao.livro}:${marcacao.capitulo}:${marcacao.versiculo}`}
-              className="rounded-lg border border-borda bg-surface p-4"
+              className="rounded-lg border border-borda p-4"
+              style={{
+                backgroundColor: corDeMarcacao(marcacao.cor ?? COR_PADRAO),
+              }}
             >
               <div className="flex items-baseline justify-between gap-4">
                 <Link
