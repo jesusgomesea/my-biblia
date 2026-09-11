@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import CampoBusca from "@/components/campo-busca";
 import ListaVersiculos from "@/components/lista-versiculos";
+import MarcarUltimaLeitura from "@/components/marcar-ultima-leitura";
 import PrefetchAdjacentes from "@/components/prefetch-adjacentes";
 import SeletorPassagem from "@/components/seletor-passagem";
 import { bible, livroPorId, type Book } from "@/lib/bible";
@@ -59,6 +60,11 @@ export default async function Capitulo(
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <PrefetchAdjacentes urls={[urlAnterior, urlSeguinte]} />
+      <MarcarUltimaLeitura
+        traducao={traducao}
+        livro={idLivro}
+        capitulo={numCapitulo}
+      />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <SeletorPassagem
           linguas={linguas}

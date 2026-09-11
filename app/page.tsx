@@ -1,8 +1,15 @@
 import Link from "next/link";
+import ContinuarLeitura from "@/components/continuar-leitura";
+import VersiculoEmDestaque from "@/components/versiculo-em-destaque";
+import { versiculoDoDia } from "@/lib/versiculo-do-dia";
 
 export default function Home() {
+  const leitura = versiculoDoDia();
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-16 lg:py-24">
+      <ContinuarLeitura />
+
       <section className="grid gap-10 lg:grid-cols-[1.2fr_1fr] lg:items-center">
         <div>
           <p className="text-xs uppercase tracking-wider text-accent">
@@ -33,32 +40,20 @@ export default function Home() {
           </div>
         </div>
 
-        <aside className="hidden lg:block">
-          <div className="rounded-2xl border border-borda bg-surface p-6 shadow-sm">
-            <p className="text-xs uppercase tracking-wider text-muted">
-              Exemplo de plano
-            </p>
-            <p className="mt-3 font-serif text-lg font-medium">
-              Caminho do Perdão em 7 dias
-            </p>
-            <p className="mt-1 text-sm text-muted">15 min por dia · em NVT</p>
-            <ol className="mt-5 space-y-3 text-sm">
-              <ItemPlano dia={1} foco="A dívida impagável" passagem="Mateus 18:21-35" />
-              <ItemPlano dia={2} foco="Ser perdoado" passagem="Salmos 32" />
-              <ItemPlano dia={3} foco="Perdoar quem?" passagem="Lucas 6:27-36" />
-              <ItemPlano dia={4} foco="Sem guardar mágoa" passagem="Efésios 4:26-32" />
-            </ol>
-            <p className="mt-4 text-xs text-muted">
-              Um exemplo do que a IA monta em segundos.
-            </p>
-          </div>
-        </aside>
+        <div className="hidden lg:block">
+          <VersiculoEmDestaque leitura={leitura} />
+        </div>
+      </section>
+
+      {/* No mobile o versiculo vira uma sessao propria, abaixo do hero. */}
+      <section className="mt-12 lg:hidden">
+        <VersiculoEmDestaque leitura={leitura} />
       </section>
 
       <section className="mt-20 grid gap-6 sm:grid-cols-3">
         <Recurso
           titulo="Sem cadastro"
-          descricao="Nada de conta ou senha. Seus planos e marcações ficam no próprio navegador."
+          descricao="Nada de conta ou senha obrigatórios. Seus planos e marcações ficam no próprio navegador."
         />
         <Recurso
           titulo="Várias traduções"
@@ -70,28 +65,6 @@ export default function Home() {
         />
       </section>
     </div>
-  );
-}
-
-function ItemPlano({
-  dia,
-  foco,
-  passagem,
-}: {
-  dia: number;
-  foco: string;
-  passagem: string;
-}) {
-  return (
-    <li className="flex items-start gap-3">
-      <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs text-accent">
-        {dia}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block font-medium">{foco}</span>
-        <span className="block text-xs text-muted">{passagem}</span>
-      </span>
-    </li>
   );
 }
 
