@@ -79,7 +79,7 @@ export default function ListaVersiculos({
   }
 
   return (
-    <article className="mt-6 space-y-2 font-serif text-lg/8">
+    <article className="leitura-texto mt-6 space-y-2 font-serif">
       {versiculos.map((versiculo) => {
         const marcado = marcadas.has(
           chaveDaMarcacao(livro, capitulo, versiculo.number),

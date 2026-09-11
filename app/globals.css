@@ -39,3 +39,25 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
 }
+
+/*
+ * Tamanho da leitura biblica. O padrao (medio) casa com o `text-lg/8` que
+ * usavamos antes; pequeno e grande alteram uma variavel que `.leitura-texto`
+ * consome. Aplicado via data attribute em <html> por PreferenciasLeitura.
+ */
+:root {
+  --fonte-leitura: 1.125rem;
+  --altura-leitura: 2rem;
+}
+[data-fonte="pequeno"] {
+  --fonte-leitura: 1rem;
+  --altura-leitura: 1.75rem;
+}
+[data-fonte="grande"] {
+  --fonte-leitura: 1.375rem;
+  --altura-leitura: 2.25rem;
+}
+.leitura-texto {
+  font-size: var(--fonte-leitura);
+  line-height: var(--altura-leitura);
+}

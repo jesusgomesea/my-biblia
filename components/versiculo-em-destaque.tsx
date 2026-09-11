@@ -37,7 +37,7 @@ export default async function VersiculoEmDestaque({
         Versículo do dia
       </p>
 
-      <blockquote className="mt-4 space-y-2 font-serif text-lg/8">
+      <blockquote className="leitura-texto mt-4 space-y-2 font-serif">
         {fatia.map((versiculo) => (
           <p key={versiculo.number} className="flex gap-2">
             <span className="w-6 shrink-0 pt-1.5 text-right font-sans text-xs text-muted">

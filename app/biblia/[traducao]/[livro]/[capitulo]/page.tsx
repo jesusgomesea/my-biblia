@@ -4,6 +4,7 @@ import CampoBusca from "@/components/campo-busca";
 import ListaVersiculos from "@/components/lista-versiculos";
 import MarcarUltimaLeitura from "@/components/marcar-ultima-leitura";
 import PrefetchAdjacentes from "@/components/prefetch-adjacentes";
+import PreferenciasLeitura from "@/components/preferencias-leitura";
 import SeletorPassagem from "@/components/seletor-passagem";
 import { bible, livroPorId, type Book } from "@/lib/bible";
 
@@ -76,10 +77,13 @@ export default async function Capitulo(
         <CampoBusca traducao={traducao} />
       </div>
 
-      <h1 className="mt-8 font-serif text-2xl font-semibold">
-        {atual.name}{" "}
-        <span className="text-accent">{numCapitulo}</span>
-      </h1>
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="font-serif text-2xl font-semibold">
+          {atual.name}{" "}
+          <span className="text-accent">{numCapitulo}</span>
+        </h1>
+        <PreferenciasLeitura />
+      </div>
 
       <ListaVersiculos
         versiculos={versiculos}
