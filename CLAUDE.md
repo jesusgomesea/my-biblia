@@ -50,7 +50,11 @@ plano de estudo para ele.
 ### 4. Marcação de versículos
 
 - Destacar / favoritar versículos.
-- Anotações pessoais em um versículo (a definir na modelagem).
+- Anotações pessoais em um versículo marcado, opcionais e editáveis inline.
+
+### 5. Comparação de traduções
+
+- Ver o mesmo capítulo em duas ou mais traduções lado a lado, para estudo.
 
 ## Stack
 

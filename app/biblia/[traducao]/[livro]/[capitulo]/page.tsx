@@ -82,7 +82,15 @@ export default async function Capitulo(
           {atual.name}{" "}
           <span className="text-accent">{numCapitulo}</span>
         </h1>
-        <PreferenciasLeitura />
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/comparar/${idLivro}/${numCapitulo}?t=${traducao}`}
+            className="text-sm text-accent hover:underline"
+          >
+            Comparar traduções
+          </Link>
+          <PreferenciasLeitura />
+        </div>
       </div>
 
       <ListaVersiculos
