@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import PainelStreak from '@/components/painel-streak'
 import { listarPlanos, removerPlano } from '@/lib/planos/armazenamento'
 import type { Plano } from '@/lib/planos/tipos'
 
@@ -123,6 +124,10 @@ function PainelBoasVindas({ planos }: { planos: Plano[] | null }) {
             diasTotal === 0 ? '—' : `${Math.round((diasFeitos / diasTotal) * 100)}%`
           }
         />
+      </div>
+
+      <div className="mt-6">
+        <PainelStreak />
       </div>
 
       {pendente && (

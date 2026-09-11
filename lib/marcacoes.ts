@@ -1,5 +1,6 @@
 'use client'
 
+import { registrarAtividadeHoje } from '@/lib/atividade'
 import { sincronizarDepois } from '@/lib/dados/nuvem'
 
 export const CORES = ['amarelo', 'rosa', 'azul', 'verde', 'roxo'] as const
@@ -71,9 +72,11 @@ export function alternarMarcacao(marcacao: Marcacao): void {
     marcacao.capitulo,
     marcacao.versiculo,
   )
-  if (marcacoes[chave]) delete marcacoes[chave]
+  const jaMarcado = !!marcacoes[chave]
+  if (jaMarcado) delete marcacoes[chave]
   else marcacoes[chave] = marcacao
   escrever(marcacoes)
+  if (!jaMarcado) registrarAtividadeHoje()
 }
 
 export function observarMarcacoes(aoMudar: () => void): () => void {

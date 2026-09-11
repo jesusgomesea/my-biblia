@@ -1,5 +1,6 @@
 'use client'
 
+import { registrarAtividadeHoje } from '@/lib/atividade'
 import { sincronizarDepois } from '@/lib/dados/nuvem'
 import type { PedidoDePlano, Plano } from './tipos'
 
@@ -50,6 +51,7 @@ export function salvarPlano(
 }
 
 export function alternarDiaConcluido(id: string, dia: number): void {
+  const antes = ler().find((p) => p.id === id)?.concluidos.includes(dia)
   escrever(
     ler().map((plano) =>
       plano.id === id
@@ -62,6 +64,8 @@ export function alternarDiaConcluido(id: string, dia: number): void {
         : plano,
     ),
   )
+  // Só marca atividade quando é uma NOVA conclusão, não quando desmarca.
+  if (antes === false) registrarAtividadeHoje()
 }
 
 export function removerPlano(id: string): void {
